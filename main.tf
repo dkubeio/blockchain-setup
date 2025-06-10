@@ -403,7 +403,7 @@ docker --version
 # Clone the repository using GitHub token
 echo "Cloning repository..."
 cd /home/ec2-user
-git clone -b ${var.github_branch} https://${var.github_token}@github.com/${var.github_repo}.git
+git clone -b ${var.github_ref} https://${var.github_token}@github.com/${var.github_repo}.git
 REPO_DIR=$(echo ${var.github_repo} | cut -d'/' -f2)
 
 # Execute the user data script

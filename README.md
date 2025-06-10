@@ -130,7 +130,7 @@ terraform apply tf.plan
    - `instance_type`: EC2 instance type for the client (default: "t3.medium")
    - `ssh_key_name`: Name of the SSH key pair (default: "blockchain")
    - `github_repo`: GitHub repository in format owner/repo (default: "dkubeio/Blockchain")
-   - `github_branch`: GitHub branch to clone (default: "document-ledger")
+   - `github_ref`: GitHub reference to clone (can be branch name or tag name) (default: "document-ledger")
    - `chaincode_name`: Name of the chaincode to be deployed (default: "mycc")
 
    ⚠️ **Security Note**: 

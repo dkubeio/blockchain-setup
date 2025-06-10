@@ -75,10 +75,10 @@ variable "github_repo" {
   default     = "dkubeio/Blockchain"
 }
 
-variable "github_branch" {
-  description = "GitHub branch to clone"
+variable "github_ref" {
+  description = "GitHub reference to clone (can be branch name or tag name)"
   type        = string
-  default     = "document-ledger"
+  default     = "v1.0.0"
 }
 
 variable "chaincode_name" {
