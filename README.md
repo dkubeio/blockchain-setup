@@ -88,8 +88,9 @@ cp terraform.tfvars.example terraform.tfvars
 # Required values:
 # - github_token: Your GitHub personal access token
 # - openai_api_key: Your OpenAI API key
-# - admin_password: A secure password for the network admin
-# - ssh_cidr: Your IP address for SSH access (e.g., "123.45.67.89/32")
+# Optional values (recommended):
+# - admin_password: A secure password for the network admin (default: auto-generated)
+# - ssh_cidr: Your IP address for SSH access (e.g., "123.45.67.89/32") (recommended for security)
 
 # Initialize and apply
 terraform init
@@ -116,10 +117,10 @@ terraform apply tf.plan
    ### 🔒 Required Variables
    - `github_token`: Your GitHub personal access token
    - `openai_api_key`: Your OpenAI API key
-   - `admin_password`: A secure password for the network admin
-   - `ssh_cidr`: Your IP address for SSH access (e.g., "123.45.67.89/32")
 
    ### 🔧 Optional Variables (with defaults)
+   - `admin_password`: A secure password for the network admin (default: auto-generated)
+   - `ssh_cidr`: Your IP address for SSH access (e.g., "123.45.67.89/32") (recommended for security)
    - `aws_region`: AWS region to deploy resources (default: "us-east-1")
    - `resource_prefix`: Prefix for all resource names (default: "fabric")
    - `vpc_cidr`: CIDR block for the VPC (default: "10.0.0.0/16")
