@@ -78,12 +78,18 @@ This project provisions a secure, multi-tier AWS network and Managed Blockchain 
 
 ```sh
 # Clone the repository
-git clone <repo-url>
-cd Blockchain/terraform
+git clone https://github.com/dkubeio/blockchain-setup.git
+cd Blockchain/
 
-# Create environment file
-echo "GITHUB_TOKEN=<your-github-token>" > .env
-echo "OPENAI_API_KEY=<your-openai-api-key>" >> .env
+# Create terraform.tfvars file
+cp terraform.tfvars.example terraform.tfvars
+
+# Edit terraform.tfvars with your values
+# Required values:
+# - github_token: Your GitHub personal access token
+# - openai_api_key: Your OpenAI API key
+# - admin_password: A secure password for the network admin
+# - ssh_cidr: Your IP address for SSH access (e.g., "123.45.67.89/32")
 
 # Initialize and apply
 terraform init
@@ -95,42 +101,28 @@ terraform apply tf.plan
 
 1. **📥 Clone the Repository**
    ```sh
-   git clone <repo-url>
-   cd Blockchain/terraform
+   git clone https://github.com/dkubeio/blockchain-setup.git
+   cd Blockchain/
    ```
 
-2. **📝 Create Environment File**
-   Create a `.env` file with your credentials:
-   ```sh
-   # Required Credentials
-   GITHUB_TOKEN=<your-github-token>
-   OPENAI_API_KEY=<your-openai-api-key>
-   ```
-
-   ⚠️ **Note**: These credentials will be used during the Terraform plan and apply steps. Make sure to keep this file secure and never commit it to version control.
-
-3. **⚡ Initialize Terraform**
-   ```sh
-   terraform init
-   ```
-
-4. **📄 Create terraform.tfvars**
+2. **📝 Create terraform.tfvars**
    ```sh
    cp terraform.tfvars.example terraform.tfvars
    ```
 
-5. **⚙️ Configure Variables**
+3. **⚙️ Configure Variables**
    Edit `terraform.tfvars` with your values. Here are all available variables:
 
    ### 🔒 Required Variables
    - `github_token`: Your GitHub personal access token
    - `openai_api_key`: Your OpenAI API key
+   - `admin_password`: A secure password for the network admin
+   - `ssh_cidr`: Your IP address for SSH access (e.g., "123.45.67.89/32")
 
    ### 🔧 Optional Variables (with defaults)
    - `aws_region`: AWS region to deploy resources (default: "us-east-1")
    - `resource_prefix`: Prefix for all resource names (default: "fabric")
    - `vpc_cidr`: CIDR block for the VPC (default: "10.0.0.0/16")
-   - `ssh_cidr`: Your IP address for SSH access (default: "0.0.0.0/0")
    - `network_name`: Name of the Fabric network (default: "fabric-network")
    - `member_name`: Name of the network member (default: "member1")
    - `admin_username`: Admin username for the network (default: "admin")
@@ -140,20 +132,24 @@ terraform apply tf.plan
    - `github_repo`: GitHub repository in format owner/repo (default: "dkubeio/Blockchain")
    - `github_branch`: GitHub branch to clone (default: "document-ledger")
    - `chaincode_name`: Name of the chaincode to be deployed (default: "mycc")
-   - `admin_password`: Admin password for the network (if not provided, a random password will be generated)
 
    ⚠️ **Security Note**: 
-   - Never commit `.env` or `terraform.tfvars` files to version control
+   - Never commit `terraform.tfvars` to version control
    - Use strong, unique passwords for all credentials
-   - Restrict `ssh_cidr` to your specific IP address in production
+   - Restrict `ssh_cidr` to your specific IP address
    - Consider using AWS Secrets Manager for sensitive values in production
 
-6. **📋 Plan the Deployment**
+4. **⚡ Initialize Terraform**
+   ```sh
+   terraform init
+   ```
+
+5. **📋 Plan the Deployment**
    ```sh
    terraform plan -out=tf.plan
    ```
 
-7. **🚀 Apply the Deployment**
+6. **🚀 Apply the Deployment**
    ```sh
    terraform apply tf.plan
    ```
