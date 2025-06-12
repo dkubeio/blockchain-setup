@@ -28,17 +28,32 @@ output "vpc_endpoint_id" {
   value       = aws_vpc_endpoint.managedblockchain.id
 }
 
-output "fabric_network_id" {
-  description = "ID of the Fabric network"
+output "network_id" {
+  description = "ID of the Managed Blockchain network"
   value       = data.external.network_info.result.network_id
 }
 
-output "fabric_member_id" {
-  description = "ID of the Fabric network member"
+output "member_id" {
+  description = "ID of the Managed Blockchain member"
   value       = data.external.network_info.result.member_id
 }
 
-output "client_public_ip" {
-  description = "The public IP address of the client instance"
+output "client_ip" {
+  description = "Public IP address of the client VM"
   value       = aws_eip.client_eip.public_ip
+}
+
+output "key_pair_name" {
+  description = "Name of the created key pair"
+  value       = aws_key_pair.blockchain_key.key_name
+}
+
+output "private_key_path" {
+  description = "Path to the private key file"
+  value       = local_file.private_key.filename
+}
+
+output "client_vm_url" {
+  description = "URL to access the Blockchain client UI"
+  value       = "http://${aws_eip.client_eip.public_ip}:3000"
 }

@@ -16,6 +16,10 @@ terraform {
       source  = "hashicorp/random"
       version = ">= 3.0.0"
     }
+    tls = {
+      source  = "hashicorp/tls"
+      version = ">= 4.0.0"
+    }
   }
 }
 
@@ -336,6 +340,37 @@ resource "aws_eip" "client_eip" {
   })
 }
 
+# Create key pair
+resource "aws_key_pair" "blockchain_key" {
+  key_name   = "${var.network_name}-key"
+  public_key = tls_private_key.blockchain_key.public_key_openssh
+}
+
+# Generate private key
+resource "tls_private_key" "blockchain_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# Save private key to file
+resource "local_file" "private_key" {
+  content         = tls_private_key.blockchain_key.private_key_pem
+  filename        = "${path.module}/${var.network_name}-key.pem"
+  file_permission = "0400"
+}
+
+# Clean up local key file during destroy
+resource "null_resource" "cleanup_key" {
+  triggers = {
+    key_file = local_file.private_key.filename
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "rm -f ${self.triggers.key_file}"
+  }
+}
+
 # Create EC2 instance for client
 resource "aws_instance" "client" {
   depends_on = [
@@ -350,7 +385,7 @@ resource "aws_instance" "client" {
   subnet_id     = module.network.public_subnet_ids[0]
   vpc_security_group_ids = [module.network.client_sg_id]
   iam_instance_profile = aws_iam_instance_profile.ec2_profile.name
-  key_name      = var.ssh_key_name
+  key_name      = aws_key_pair.blockchain_key.key_name
 
   root_block_device {
     volume_type = "gp3"

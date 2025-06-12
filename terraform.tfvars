@@ -8,9 +8,6 @@ admin_username  = "admin"
 instance_type   = "t3.medium"
 chaincode_name  = "mycc"
 github_ref = "v1.0.0"
-
-github_token = ""
-openai_api_key = ""
 tags = {
   Environment = "development"
   Project     = "hyperledger-fabric"

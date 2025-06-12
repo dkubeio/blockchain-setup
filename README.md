@@ -1,21 +1,23 @@
-# 🏗️ Blockchain Terraform Project Setup
+# 🏗️ DKube DocVault Terraform Setup
 
 [![Terraform Version](https://img.shields.io/badge/terraform-1.6+-blue.svg)](https://www.terraform.io/downloads.html)
 [![AWS](https://img.shields.io/badge/AWS-Cloud-orange.svg)](https://aws.amazon.com)
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/yourusername/blockchain-setup/graphs/commit-activity)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/dkubeio/blockchain-setup/graphs/commit-activity)
+
+![Dkube DocVault Banner](images/dkube-docvault.svg)
 
 ## 📋 Table of Contents
 - [Overview](#-overview)
 - [Prerequisites](#️-prerequisites)
 - [Quick Start](#-quick-start)
-- [Detailed Setup](#-detailed-setup)
+- [Accessing the Application](#-accessing-the-application)
 - [Resource Creation](#-resource-creation)
 - [Security](#-security)
 - [Troubleshooting](#-troubleshooting)
 - [Cleanup](#-cleanup)
 
-## Overview
-This project provisions a secure, multi-tier AWS network and Managed Blockchain resources using Terraform fro document ledgering and securing AI interactions. 
+## 🎯 Overview
+This project provisions a secure, multi-tier AWS network and Managed Blockchain resources using Terraform for document ledgering and securing AI interactions. The infrastructure includes a Hyperledger Fabric network, client application, and all necessary networking components.
 
 ## 🛠️ Prerequisites
 
@@ -71,7 +73,7 @@ This project provisions a secure, multi-tier AWS network and Managed Blockchain 
 
 ### 🔑 Required Credentials
 1. 🔐 AWS Account with appropriate permissions
-2. 🐙 GitHub Personal Access Token (with repo access)
+2. <img src="images/mini-logo.svg" alt="Dkube" width="20" height="20"> Dkube provided Git Access Token
 3. 🤖 OpenAI API Key
 
 ## 🚀 Quick Start
@@ -79,83 +81,50 @@ This project provisions a secure, multi-tier AWS network and Managed Blockchain 
 ```sh
 # Clone the repository
 git clone https://github.com/dkubeio/blockchain-setup.git
-cd Blockchain/
+cd blockchain-setup/
 
-# Create terraform.tfvars file
-cp terraform.tfvars.example terraform.tfvars
+# Method 1 (Recommended): Set environment variables for better security
+export DKUBE_GIT_TOKEN="your-dkube-git-token"
+export OPENAI_KEY="your-openai-api-key"
+
+# Initialize
+terraform init -upgrade
+
+# Apply
+terraform apply -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_KEY"
+
+# Method 2: Pass credentials directly as CLI arguments
+# terraform apply -var="github_token=your-github-token" -var="openai_api_key=your-openai-api-key"
 
 # Edit terraform.tfvars with your values
-# Required values:
-# - github_token: Your GitHub personal access token
-# - openai_api_key: Your OpenAI API key
 # Optional values (recommended):
 # - admin_password: A secure password for the network admin (default: auto-generated)
 # - ssh_cidr: Your IP address for SSH access (e.g., "123.45.67.89/32") (recommended for security)
-
-# Initialize and apply
-terraform init
-terraform plan -out=tf.plan
-terraform apply tf.plan
 ```
 
-## 📝 Detailed Setup
+## 🌐 Accessing the Application
 
-1. **📥 Clone the Repository**
+After successful deployment, follow these steps to access the application:
+
+1. **Get the Client VM IP**
    ```sh
-   git clone https://github.com/dkubeio/blockchain-setup.git
-   cd Blockchain/
+   # The IP address will be shown in the terraform output
+   # Look for the output labeled "client_public_ip"
    ```
 
-2. **📝 Create terraform.tfvars**
-   ```sh
-   cp terraform.tfvars.example terraform.tfvars
-   ```
+2. **Access the UI**
+   - Open your web browser
+   - Navigate to: `http://<CLIENT-VM-IP>:3000`
+   - Replace `<CLIENT-VM-IP>` with the IP address from step 1
 
-3. **⚙️ Configure Variables**
-   Edit `terraform.tfvars` with your values. Here are all available variables:
+3. **First-time Setup**
+   - Click on "Sign Up" to create your account
+   - Fill in your details and create a secure password
+   - After signup, you can log in with your credentials
 
-   ### 🔒 Required Variables
-   - `github_token`: Your GitHub personal access token
-   - `openai_api_key`: Your OpenAI API key
+⚠️ **Important**: Make sure to save your login credentials securely as they will be needed for future access.
 
-   ### 🔧 Optional Variables (with defaults)
-   - `admin_password`: A secure password for the network admin (default: auto-generated)
-   - `ssh_cidr`: Your IP address for SSH access (e.g., "123.45.67.89/32") (recommended for security)
-   - `aws_region`: AWS region to deploy resources (default: "us-east-1")
-   - `resource_prefix`: Prefix for all resource names (default: "fabric")
-   - `vpc_cidr`: CIDR block for the VPC (default: "10.0.0.0/16")
-   - `network_name`: Name of the Fabric network (default: "fabric-network")
-   - `member_name`: Name of the network member (default: "member1")
-   - `admin_username`: Admin username for the network (default: "admin")
-   - `peer_node_name`: Name of the peer node (default: "peer1")
-   - `instance_type`: EC2 instance type for the client (default: "t3.medium")
-   - `ssh_key_name`: Name of the SSH key pair (default: "blockchain")
-   - `github_repo`: GitHub repository in format owner/repo (default: "dkubeio/Blockchain")
-   - `github_ref`: GitHub reference to clone (can be branch name or tag name) (default: "v1.0.0")
-   - `chaincode_name`: Name of the chaincode to be deployed (default: "mycc")
-
-   ⚠️ **Security Note**: 
-   - Never commit `terraform.tfvars` to version control
-   - Use strong, unique passwords for all credentials
-   - Restrict `ssh_cidr` to your specific IP address
-   - Consider using AWS Secrets Manager for sensitive values in production
-
-4. **⚡ Initialize Terraform**
-   ```sh
-   terraform init
-   ```
-
-5. **📋 Plan the Deployment**
-   ```sh
-   terraform plan -out=tf.plan
-   ```
-
-6. **🚀 Apply the Deployment**
-   ```sh
-   terraform apply tf.plan
-   ```
-
-## ⏱️ Resource Creation
+## ⚡ Resource Creation
 
 The infrastructure is created in the following sequence:
 
@@ -171,16 +140,25 @@ The infrastructure is created in the following sequence:
    - Create member in the network (waits 10 minutes)
    - Create peer node (waits 10 minutes)
 
-3. **💻 Client Infrastructure** (5-10 minutes):
+3. **💻 Client EC2 Instance Setup** (15-20 minutes):
    - Create EC2 instance in public subnet
-   - Install Git
-   - Clone repository using GitHub token
-   - Configure with user data script
+   - Install dependencies (Node.js, Docker, AWS CLI, Fabric CLI)
+   - Clone repository and configure
    - Attach Elastic IP
 
-Total deployment time: Approximately 60-65 minutes
+4. **🔗 Blockchain Configuration** (10-15 minutes):
+   - Admin enrollment on blockchain
+   - Channel creation and joining
+   - Chaincode deployment and instantiation
 
-## 🔒 Security
+5. **🌐 Client UI Setup** (5-10 minutes):
+   - Install UI dependencies
+   - Configure environment
+   - Start application server
+
+Total deployment time: Approximately 75-90 minutes
+
+## 🛡️ Security
 
 ### Network Security
 - Blockchain nodes in private subnets
@@ -200,7 +178,7 @@ Total deployment time: Approximately 60-65 minutes
 - Audit logging enabled
 - Resource tagging for tracking
 
-## 🔍 Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues
 
@@ -208,13 +186,13 @@ Total deployment time: Approximately 60-65 minutes
    - Check AWS CLI credentials and permissions
    - Verify AWS region supports Managed Blockchain
    - Ensure all required tools are installed
-   - Verify GitHub token and OpenAI API key
+   - Verify Dkube Git token and OpenAI API key
 
 2. **⚠️ Terraform Apply Failures**
    - Check error messages for specific issues
    - Verify AWS credentials permissions
    - Check AWS Managed Blockchain status
-   - Verify GitHub repository access
+   - Verify repository access
 
 3. **⏳ Network Creation Delays**
    - Default wait time is 40 minutes
