@@ -107,15 +107,12 @@ terraform apply -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENA
 After successful deployment, follow these steps to access the application:
 
 1. **Get the Client VM IP**
-   ```sh
-   # The IP address will be shown in the terraform output
-   # Look for the output labeled "client_public_ip"
-   ```
+   - The UI address will be shown in the terraform output
+   - Look for the output labeled `client_vm_url`
 
 2. **Access the UI**
    - Open your web browser
-   - Navigate to: `http://<CLIENT-VM-IP>:3000`
-   - Replace `<CLIENT-VM-IP>` with the IP address from step 1
+   - Navigate to: `client_vm_url`
 
 3. **First-time Setup**
    - Click on "Sign Up" to create your account
