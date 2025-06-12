@@ -4,7 +4,9 @@
 [![AWS](https://img.shields.io/badge/AWS-Cloud-orange.svg)](https://aws.amazon.com)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/dkubeio/blockchain-setup/graphs/commit-activity)
 
+<div align="center">
 <img src="images/dkube-docvault.svg" alt="Dkube DocVault Banner" width="600"/>
+</div>
 
 ## 📋 Table of Contents
 - [Overview](#-overview)
