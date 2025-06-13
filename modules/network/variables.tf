@@ -13,7 +13,7 @@ variable "ssh_cidr" {
 variable "resource_prefix" {
   description = "Prefix to be used for all resources"
   type        = string
-  default     = "fabric"
+  default     = "docvault"
 }
 
 variable "tags" {
@@ -21,7 +21,7 @@ variable "tags" {
   type        = map(string)
   default     = {
     Environment = "development"
-    Project     = "hyperledger-fabric"
+    Project     = "DKube-DocVault"
     ManagedBy   = "terraform"
   }
 } 

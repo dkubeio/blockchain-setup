@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "resource_prefix" {
   description = "Prefix to be used for all resources"
   type        = string
-  default     = "fabric"
+  default     = "docvault"
 }
 
 variable "vpc_cidr" {
@@ -25,7 +25,7 @@ variable "ssh_cidr" {
 variable "network_name" {
   description = "Name of the Hyperledger Fabric network"
   type        = string
-  default     = "fabric-network"
+  default     = "docvault-network"
 }
 
 variable "member_name" {
@@ -58,7 +58,7 @@ variable "tags" {
   type        = map(string)
   default     = {
     Environment = "development"
-    Project     = "hyperledger-fabric"
+    Project     = "DKube-DocVault"
     ManagedBy   = "terraform"
   }
 }
@@ -66,7 +66,7 @@ variable "tags" {
 variable "ssh_key_name" {
   description = "Name of the SSH key pair to use for the EC2 instance"
   type        = string
-  default     = "fabric-client"
+  default     = "docvault-client"
 }
 
 variable "github_repo" {
@@ -78,7 +78,7 @@ variable "github_repo" {
 variable "github_ref" {
   description = "GitHub reference to clone (can be branch name or tag name)"
   type        = string
-  default     = "v1.0.0"
+  default     = "v1.1.0"
 }
 
 variable "chaincode_name" {

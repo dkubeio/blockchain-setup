@@ -55,7 +55,7 @@ module "network" {
 }
 
 # Create Managed Blockchain network using AWS CLI
-resource "null_resource" "fabric_network" {
+resource "null_resource" "docvault_network" {
   triggers = {
     network_name = var.network_name
     member_name  = var.member_name
@@ -109,7 +109,7 @@ resource "null_resource" "fabric_network" {
 
 # Wait for 40 minutes for the network to be fully provisioned
 resource "time_sleep" "wait_for_network" {
-  depends_on = [null_resource.fabric_network]
+  depends_on = [null_resource.docvault_network]
   create_duration = "40m"
 }
 
@@ -377,7 +377,8 @@ resource "aws_instance" "client" {
     aws_vpc_endpoint.managedblockchain,
     module.network,
     time_sleep.wait_for_network,
-    aws_eip.client_eip
+    aws_eip.client_eip,
+    aws_key_pair.blockchain_key
   ]
   
   ami           = data.aws_ami.amazon_linux_2.id
@@ -462,4 +463,10 @@ EOT
 resource "aws_eip_association" "client_eip_assoc" {
   instance_id   = aws_instance.client.id
   allocation_id = aws_eip.client_eip.id
+}
+
+# Wait for 15 minutes for EC2 setup completion
+resource "time_sleep" "wait_for_ec2_setup" {
+  depends_on = [aws_instance.client]
+  create_duration = "15m"
 }

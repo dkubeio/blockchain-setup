@@ -1,16 +1,17 @@
 aws_region     = "us-east-1"
-resource_prefix = "fabric"
+resource_prefix = "docvault"
 vpc_cidr       = "10.0.0.0/16"
 ssh_cidr       = "0.0.0.0/0"  # ⚠️ SECURITY WARNING: Restrict this to your specific IP address in production
-network_name    = "fabric-network"
+network_name    = "docvault-network"
 member_name     = "member1"
 admin_username  = "admin"
 instance_type   = "t3.medium"
 chaincode_name  = "mycc"
-github_ref = "v1.0.0"
+github_ref = "v1.1.0"
+ssh_key_name = "docvault-client"
 tags = {
   Environment = "development"
-  Project     = "hyperledger-fabric"
+  Project     = "DKube-DocVault"
   ManagedBy   = "terraform"
 }
 
