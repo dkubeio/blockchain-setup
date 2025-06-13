@@ -469,4 +469,12 @@ resource "aws_eip_association" "client_eip_assoc" {
 resource "time_sleep" "wait_for_ec2_setup" {
   depends_on = [aws_instance.client]
   create_duration = "15m"
+
+  triggers = {
+    instance_id = aws_instance.client.id
+  }
+
+  provisioner "local-exec" {
+    command = "echo 'Waiting for EC2 client (${aws_instance.client.id}) to complete setup...'"
+  }
 }
