@@ -78,7 +78,7 @@ variable "github_repo" {
 variable "github_ref" {
   description = "GitHub reference to clone (can be branch name or tag name)"
   type        = string
-  default     = "v1.1.0"
+  default     = "v1.5.0"
 }
 
 variable "chaincode_name" {

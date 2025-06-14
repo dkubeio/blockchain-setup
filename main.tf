@@ -31,6 +31,21 @@ provider "time" {}
 
 provider "null" {}
 
+# Validate required variables
+locals {
+  validate_github_token = (
+    var.github_token == null || var.github_token == "" ? 
+    tobool("GitHub token is required. Please set the github_token variable.") : 
+    true
+  )
+  
+  validate_openai_key = (
+    var.openai_api_key == null || var.openai_api_key == "" ? 
+    tobool("OpenAI API key is required. Please set the openai_api_key variable.") : 
+    true
+  )
+}
+
 # Generate random password for admin
 resource "random_password" "admin_password" {
   length           = 16
@@ -107,15 +122,9 @@ resource "null_resource" "docvault_network" {
   }
 }
 
-# Wait for 40 minutes for the network to be fully provisioned
-resource "time_sleep" "wait_for_network" {
-  depends_on = [null_resource.docvault_network]
-  create_duration = "40m"
-}
-
 # Get network ID using AWS CLI
 data "external" "network_info" {
-  depends_on = [time_sleep.wait_for_network]
+  depends_on = [null_resource.docvault_network]
   
   program = ["bash", "-c", <<-EOT
     # Get the network ID
@@ -139,7 +148,7 @@ data "external" "network_info" {
 
 # Create peer node using AWS CLI
 resource "null_resource" "create_peer" {
-  depends_on = [time_sleep.wait_for_network, data.external.network_info]
+  depends_on = [null_resource.docvault_network, data.external.network_info]
 
   triggers = {
     network_id = data.external.network_info.result.network_id
@@ -239,7 +248,7 @@ resource "time_sleep" "wait_for_peer" {
 resource "aws_vpc_endpoint" "managedblockchain" {
   depends_on = [
     module.network,
-    time_sleep.wait_for_network,
+    null_resource.docvault_network,
     time_sleep.wait_for_peer,
     data.external.network_info
   ]
@@ -376,7 +385,7 @@ resource "aws_instance" "client" {
   depends_on = [
     aws_vpc_endpoint.managedblockchain,
     module.network,
-    time_sleep.wait_for_network,
+    null_resource.docvault_network,
     aws_eip.client_eip,
     aws_key_pair.blockchain_key
   ]

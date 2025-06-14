@@ -87,13 +87,13 @@ cd blockchain-setup/
 
 # Method 1 (Recommended): Set environment variables for better security
 export DKUBE_GIT_TOKEN="your-dkube-git-token"
-export OPENAI_KEY="your-openai-api-key"
+export OPENAI_API_KEY="your-openai-api-key"
 
 # Initialize
 terraform init -upgrade
 
 # Apply
-terraform apply -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_KEY"
+terraform apply -auto-approve -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" 
 
 # Method 2: Pass credentials directly as CLI arguments
 # terraform apply -var="github_token=your-github-token" -var="openai_api_key=your-openai-api-key"
@@ -210,7 +210,9 @@ Total deployment time: Approximately 75-90 minutes
 
 To destroy all created resources:
 ```bash
-terraform destroy
+## needs to add var because terraform expects secrets during destroy as well
+## But these values can be dummy values during destroy time.
+terraform destroy -auto-approve -var="github_token=dummy_token" -var="openai_api_key=open_api_key" 
 ```
 
 ⚠️ **Warning**: This will permanently delete all resources. Ensure you have backups if needed.
