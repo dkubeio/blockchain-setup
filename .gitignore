@@ -37,4 +37,39 @@ override.tf.json
 # kubeconfig file for the cluster
 kubeconfig
 
+# Terraform files
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+
+# SSH keys and certificates
 *.pem
+*.key
+id_rsa*
+*.pub
+
+# Logs
+*.log
+terraform.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp

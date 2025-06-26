@@ -1,59 +1,92 @@
-output "vpc_id" {
-  description = "ID of the VPC"
-  value       = module.network.vpc_id
+# AWS outputs
+output "aws_network_id" {
+  description = "AWS Managed Blockchain network ID"
+  value       = var.cloud_provider == "aws" ? module.aws[0].network_id : null
 }
 
-output "private_subnet_ids" {
-  description = "IDs of the private subnets"
-  value       = module.network.private_subnet_ids
+output "aws_member_id" {
+  description = "AWS Managed Blockchain member ID"
+  value       = var.cloud_provider == "aws" ? module.aws[0].member_id : null
 }
 
-output "public_subnet_ids" {
-  description = "IDs of the public subnets"
-  value       = module.network.public_subnet_ids
+output "aws_client_public_ip" {
+  description = "Public IP of the AWS client instance"
+  value       = var.cloud_provider == "aws" ? module.aws[0].client_public_ip : null
 }
 
-output "client_instance_id" {
-  description = "ID of the client EC2 instance"
-  value       = aws_instance.client.id
+output "aws_private_key_path" {
+  description = "Path to the AWS private key file"
+  value       = var.cloud_provider == "aws" ? module.aws[0].private_key_path : null
 }
 
-output "client_instance_private_ip" {
-  description = "Private IP of the client EC2 instance"
-  value       = aws_instance.client.private_ip
+# Azure outputs
+output "azure_resource_group_name" {
+  description = "Name of the Azure resource group"
+  value       = var.cloud_provider == "azure" ? module.azure[0].resource_group_name : null
 }
 
-output "vpc_endpoint_id" {
-  description = "ID of the Managed Blockchain VPC endpoint"
-  value       = aws_vpc_endpoint.managedblockchain.id
+output "azure_vm_public_ip" {
+  description = "Public IP of the Azure VM"
+  value       = var.cloud_provider == "azure" ? module.azure[0].vm_public_ip : null
 }
 
-output "network_id" {
-  description = "ID of the Managed Blockchain network"
-  value       = data.external.network_info.result.network_id
+output "azure_vm_ssh_command" {
+  description = "SSH command to connect to the Azure VM"
+  value       = var.cloud_provider == "azure" ? module.azure[0].vm_ssh_command : null
 }
 
-output "member_id" {
-  description = "ID of the Managed Blockchain member"
-  value       = data.external.network_info.result.member_id
+output "azure_vm_name" {
+  description = "Name of the Azure VM"
+  value       = var.cloud_provider == "azure" ? module.azure[0].vm_name : null
 }
 
-output "client_ip" {
-  description = "Public IP address of the client VM"
-  value       = aws_eip.client_eip.public_ip
+output "azure_private_key_path" {
+  description = "Path to the Azure private key file"
+  value       = var.cloud_provider == "azure" ? module.azure[0].private_key_path : null
 }
 
-output "key_pair_name" {
-  description = "Name of the created key pair"
-  value       = aws_key_pair.blockchain_key.key_name
+output "azure_ccf_member0_private_key_path" {
+  description = "Path to the CCF member0 private key"
+  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_member0_private_key_path : null
 }
 
-output "private_key_path" {
-  description = "Path to the private key file"
-  value       = local_file.private_key.filename
+output "azure_ccf_member0_certificate_path" {
+  description = "Path to the CCF member0 certificate"
+  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_member0_certificate_path : null
 }
 
-output "client_vm_url" {
-  description = "URL to access the Blockchain client UI"
-  value       = "http://${aws_eip.client_eip.public_ip}:3000"
+output "azure_ccf_id" {
+  description = "Azure Managed CCF application ID"
+  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_id : null
 }
+
+output "azure_ccf_identity_url" {
+  description = "Azure CCF Identity URL"
+  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_identity_url : null
+}
+
+output "azure_ccf_identity_service_uri" {
+  description = "Azure CCF Identity Service URI"
+  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_identity_service_uri : null
+}
+
+output "azure_ccf_app_uri" {
+  description = "Azure CCF Application URI"
+  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_app_uri : null
+}
+
+output "azure_ccf_ledger_uri" {
+  description = "Azure CCF Ledger URI"
+  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_ledger_uri : null
+}
+
+# Common outputs
+output "selected_provider" {
+  description = "The currently selected provider"
+  value       = var.cloud_provider
+}
+
+output "admin_username" {
+  description = "Admin username for the blockchain nodes"
+  value       = var.admin_username
+} 

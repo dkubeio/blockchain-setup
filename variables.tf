@@ -1,17 +1,30 @@
+# Provider selection
+variable "cloud_provider" {
+  description = "Cloud provider to use (aws or azure)"
+  type        = string
+  default     = "aws"
+  validation {
+    condition     = contains(["aws", "azure"], var.cloud_provider)
+    error_message = "Cloud provider must be either 'aws' or 'azure'."
+  }
+}
+
+# Common variables
+variable "admin_username" {
+  description = "Admin username for the blockchain nodes"
+  type        = string
+  default     = "admin"
+}
+
+# AWS-specific variables
 variable "aws_region" {
-  description = "AWS region to deploy resources"
+  description = "AWS region for resources"
   type        = string
   default     = "us-east-1"
 }
 
-variable "resource_prefix" {
-  description = "Prefix to be used for all resources"
-  type        = string
-  default     = "docvault"
-}
-
 variable "vpc_cidr" {
-  description = "CIDR block for the VPC"
+  description = "CIDR block for VPC"
   type        = string
   default     = "10.0.0.0/16"
 }
@@ -19,90 +32,84 @@ variable "vpc_cidr" {
 variable "ssh_cidr" {
   description = "CIDR block for SSH access"
   type        = string
-  default     = "0.0.0.0/0"  # Should be restricted to your IP in production
+  default     = "0.0.0.0/0"
+}
+
+variable "resource_prefix" {
+  description = "Prefix for AWS resource names"
+  type        = string
+  default     = "blockchain"
 }
 
 variable "network_name" {
-  description = "Name of the Hyperledger Fabric network"
+  description = "Name of the blockchain network"
   type        = string
   default     = "docvault-network"
 }
 
 variable "member_name" {
-  description = "Name of the network member"
+  description = "Name of the blockchain member"
   type        = string
-  default     = "member1"
-}
-
-variable "admin_username" {
-  description = "Admin username for the network"
-  type        = string
-  default     = "dkube"
-}
-
-
-variable "peer_node_name" {
-  description = "Name of the peer node"
-  type        = string
-  default     = "peer1"
-}
-
-variable "instance_type" {
-  description = "EC2 instance type for the client"
-  type        = string
-  default     = "t3.medium"
-}
-
-variable "tags" {
-  description = "Tags to be applied to all resources"
-  type        = map(string)
-  default     = {
-    Environment = "development"
-    Project     = "DKube-DocVault"
-    ManagedBy   = "terraform"
-  }
-}
-
-variable "ssh_key_name" {
-  description = "Name of the SSH key pair to use for the EC2 instance"
-  type        = string
-  default     = "docvault-client"
-}
-
-variable "github_repo" {
-  description = "GitHub repository in format owner/repo"
-  type        = string
-  default     = "dkubeio/Blockchain"
-}
-
-variable "github_ref" {
-  description = "GitHub reference to clone (can be branch name or tag name)"
-  type        = string
-  default     = "v1.5.0"
-}
-
-variable "chaincode_name" {
-  description = "Name of the chaincode to be deployed"
-  type        = string
-  default     = "mydl5"
+  default     = "docvault-member"
 }
 
 variable "admin_password" {
-  description = "Admin password for the network. If not provided, a random password will be generated"
+  description = "Admin password for blockchain network"
   type        = string
-  sensitive   = true
   default     = null
+  sensitive   = true
 }
 
 variable "github_token" {
-  description = "GitHub personal access token for repository access"
+  description = "GitHub token for repository access"
   type        = string
+  default     = null
   sensitive   = true
 }
 
 variable "openai_api_key" {
   description = "OpenAI API key"
   type        = string
+  default     = null
   sensitive   = true
 }
 
+variable "tags" {
+  description = "Tags to apply to AWS resources"
+  type        = map(string)
+  default = {
+    Environment = "development"
+    Project     = "blockchain-setup"
+  }
+}
+
+# Azure-specific variables
+variable "azure_resource_group_name" {
+  description = "Name of the Azure resource group"
+  type        = string
+  default     = "blockchain-rg"
+}
+
+variable "azure_location" {
+  description = "Azure region for resources"
+  type        = string
+  default     = "East US"
+}
+
+variable "azure_prefix" {
+  description = "Prefix for Azure resource names"
+  type        = string
+  default     = "blockchain"
+}
+
+variable "azure_vm_size" {
+  description = "Size of the Azure VM"
+  type        = string
+  default     = "Standard_D2s_v3"
+}
+
+variable "azure_ccf_member_count" {
+  description = "Number of CCF members"
+  type        = number
+  default     = 3
+} 
