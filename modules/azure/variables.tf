@@ -1,7 +1,7 @@
 variable "resource_group_name" {
   description = "Name of the resource group"
   type        = string
-  default     = "ccf-blockchain-rg"
+  default     = "vm-blockchain-rg"
 }
 
 variable "location" {
@@ -13,13 +13,13 @@ variable "location" {
 variable "prefix" {
   description = "Prefix for resource names"
   type        = string
-  default     = "ccf-blockchain"
+  default     = "vm-blockchain"
 }
 
 variable "vm_size" {
   description = "Size of the virtual machine"
   type        = string
-  default     = "Standard_D2s_v3"
+  default     = "Standard_B2ms"
 }
 
 variable "admin_username" {
@@ -28,14 +28,8 @@ variable "admin_username" {
   default     = "azureuser"
 }
 
-variable "ccf_member_count" {
-  description = "Number of CCF members"
-  type        = number
-  default     = 3
-}
-
-variable "app_uri" {
-  description = "URI for the CCF application"
+variable "openai_api_key" {
+  description = "OpenAI API key to set in environment"
   type        = string
-  default     = "https://github.com/microsoft/CCF/releases/download/ccf-4.0.0/sandbox_js.zip"
+  sensitive   = true
 } 

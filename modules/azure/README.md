@@ -1,6 +1,6 @@
-# Azure Managed CCF with VM Terraform Configuration
+# Azure VM Terraform Configuration
 
-This Terraform configuration deploys Azure Managed CCF (Confidential Consortium Framework) along with a virtual machine that can access the CCF instance. The configuration automatically generates SSH keys and CCF member certificates.
+This Terraform configuration deploys a simple Azure virtual machine with Docker, Azure CLI, and OpenAI API key configuration. The configuration automatically generates SSH keys for secure access.
 
 ## Prerequisites
 
@@ -19,6 +19,8 @@ This Terraform configuration deploys Azure Managed CCF (Confidential Consortium 
    sudo apt-get install terraform
    ```
 
+3. **OpenAI API Key**: You'll need a valid OpenAI API key for the environment variable
+
 ## Deployment
 
 1. **Clone and navigate to the terraform directory**
@@ -31,10 +33,11 @@ This Terraform configuration deploys Azure Managed CCF (Confidential Consortium 
    terraform init
    ```
 
-3. **Review and customize variables (optional)**
+3. **Review and customize variables (required)**
    ```bash
    cp terraform.tfvars.example terraform.tfvars
    # Edit terraform.tfvars with your preferred values
+   # Make sure to set your OpenAI API key
    ```
 
 4. **Plan the deployment**
@@ -55,13 +58,12 @@ This Terraform configuration deploys Azure Managed CCF (Confidential Consortium 
 - **Resource Group**: Contains all resources
 - **Virtual Network**: Network infrastructure for the VM
 - **Subnet**: Subnet for the VM
-- **Network Security Group**: Firewall rules for SSH and HTTPS
+- **Network Security Group**: Firewall rules for SSH (22), Port 3000, Port 8000, and HTTPS (443)
 - **Public IP**: Public IP address for the VM
 - **Network Interface**: Network interface for the VM
-- **Virtual Machine**: Ubuntu 22.04 LTS VM with CCF tools installed
-- **Managed CCF**: Azure Managed CCF instance
+- **Virtual Machine**: Ubuntu 22.04 LTS Standard B2ms VM with Docker, Azure CLI, and tools installed
+- **System Assigned Identity**: VM identity with Owner permissions on the resource group
 - **SSH Keys**: Automatically generated RSA key pair (4096 bits)
-- **CCF Certificates**: Member0 private key and certificate for CCF authentication
 
 ## Generated Files
 
@@ -69,8 +71,6 @@ After deployment, the following files will be created in the terraform directory
 
 - `id_rsa` - SSH private key (permissions: 600)
 - `id_rsa.pub` - SSH public key (permissions: 644)
-- `member0_privk.pem` - CCF member0 private key (permissions: 600)
-- `member0_cert.pem` - CCF member0 certificate (permissions: 644)
 
 **Note**: These files will be automatically deleted when you run `terraform destroy`.
 
@@ -78,11 +78,21 @@ After deployment, the following files will be created in the terraform directory
 
 The VM is pre-configured with:
 - Ubuntu 22.04 LTS
-- Docker and Docker Compose
+- Standard B2ms VM size (2 vCPUs, 8 GB RAM)
+- Docker and Docker Compose (latest version)
 - Azure CLI
-- CCF Python package
 - Node.js and npm
 - Build tools
+- System assigned identity with Owner permissions
+- OpenAI API key set as environment variable
+
+## Network Security
+
+The following ports are open in the Network Security Group:
+- **Port 22**: SSH access
+- **Port 3000**: Application port
+- **Port 8000**: Application port  
+- **Port 443**: HTTPS access
 
 ## Accessing the VM via SSH
 
@@ -95,7 +105,7 @@ After deployment, Terraform will display the VM's public IP address and complete
 terraform output vm_public_ip
 
 # Get the complete SSH command with the correct key
-terraform output vm_ssh_command
+terraform output ssh_connection_command
 ```
 
 ### Method 2: Manual SSH Connection
@@ -119,7 +129,7 @@ terraform output vm_ssh_command
 
 You can also get the VM's public IP using Azure CLI:
 ```bash
-az vm show -d -g ccf-blockchain-rg -n ccf-blockchain-vm --query publicIps -o tsv
+az vm show -d -g vm-blockchain-rg -n vm-blockchain-vm --query publicIps -o tsv
 ```
 
 ### SSH Connection Troubleshooting
@@ -128,12 +138,12 @@ If you encounter SSH connection issues:
 
 1. **Verify the VM is running**:
    ```bash
-   az vm show -g ccf-blockchain-rg -n ccf-blockchain-vm --show-details --query powerState
+   az vm show -g vm-blockchain-rg -n vm-blockchain-vm --show-details --query powerState
    ```
 
 2. **Check if the VM has a public IP**:
    ```bash
-   az vm show -d -g ccf-blockchain-rg -n ccf-blockchain-vm --query publicIps
+   az vm show -d -g vm-blockchain-rg -n vm-blockchain-vm --query publicIps
    ```
 
 3. **Verify the SSH key exists and has correct permissions**:
@@ -156,7 +166,7 @@ If you encounter SSH connection issues:
 
 5. **Check Azure Network Security Group**:
    ```bash
-   az network nsg rule list -g ccf-blockchain-rg --nsg-name ccf-blockchain-vm-nsg --query "[?name=='SSH']"
+   az network nsg rule list -g vm-blockchain-rg --nsg-name vm-blockchain-vm-nsg --query "[?name=='SSH']"
    ```
 
 ### First-time SSH Connection
@@ -169,24 +179,16 @@ Are you sure you want to continue connecting (yes/no)?
 ```
 Type `yes` to continue.
 
-## CCF Access
+## Environment Variables
 
-The Managed CCF instance provides several endpoints:
-- **Identity URL**: For identity management
-- **Identity Service URI**: For identity service operations
-- **Application URI**: For application operations
-- **Ledger URI**: For ledger operations
+The VM is configured with the following environment variables:
+- `OPENAI_API_KEY`: Set to the value provided in terraform.tfvars
+- `PATH`: Includes user's local bin directory
 
-These URLs will be displayed in the Terraform outputs.
-
-### CCF Authentication
-
-The configuration generates CCF member certificates that can be used for authentication:
-
-- **Member0 Private Key**: `member0_privk.pem`
-- **Member0 Certificate**: `member0_cert.pem`
-
-These certificates follow the CCF specification using ECDSA P384 curve and are valid for 1 year.
+You can verify the OpenAI API key is set by running:
+```bash
+echo $OPENAI_API_KEY
+```
 
 ## Example Usage
 
@@ -200,74 +202,72 @@ These certificates follow the CCF specification using ECDSA P384 curve and are v
    # Check if Docker is running
    sudo systemctl status docker
    
-   # Check if Azure CLI is installed
+   # Check Azure CLI installation
    az --version
    
-   # Check if CCF is installed
-   python3 -c "import ccf; print('CCF installed successfully')"
+   # Check OpenAI API key is set
+   echo $OPENAI_API_KEY
+   
+   # Test Docker
+   docker run hello-world
    ```
 
-3. **Install CCF client** (if not already installed):
+3. **Access your applications on ports 3000 and 8000**:
    ```bash
-   pip3 install ccf
+   # From your local machine, you can access:
+   # http://<vm-public-ip>:3000
+   # http://<vm-public-ip>:8000
    ```
-
-4. **Access CCF endpoints** using the URLs from Terraform outputs and the generated certificates.
 
 ## Cleanup
 
-To destroy all resources and delete generated files:
+To destroy all resources:
 ```bash
 terraform destroy
 ```
 
-This will automatically delete:
-- All Azure resources
-- Generated SSH keys (`id_rsa`, `id_rsa.pub`)
-- Generated CCF certificates (`member0_privk.pem`, `member0_cert.pem`)
-
-## Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `resource_group_name` | Name of the resource group | `ccf-blockchain-rg` |
-| `location` | Azure region | `East US` |
-| `prefix` | Prefix for resource names | `ccf-blockchain` |
-| `vm_size` | VM size | `Standard_D2s_v3` |
-| `admin_username` | VM admin username | `azureuser` |
-| `ccf_member_count` | Number of CCF members | `3` |
-| `app_uri` | CCF application URI | CCF sandbox app |
-
-## Security Notes
-
-- SSH keys are automatically generated and stored locally
-- CCF member certificates are generated using ECDSA P384 curve
-- All generated files are automatically cleaned up on `terraform destroy`
-- The VM has SSH (port 22) and HTTPS (port 443) open
-- Consider restricting SSH access to specific IP ranges in production
-- The CCF instance uses Azure's managed security features
-- All network traffic is encrypted
+This will remove:
+- All Azure resources (VM, network, etc.)
+- Generated SSH keys
+- Resource group
 
 ## Troubleshooting
 
-1. **SSH Connection Issues**: 
-   - Ensure you're using the generated SSH key (`id_rsa`)
-   - Check if the VM is running and has a public IP
-   - Verify network security group rules allow SSH access
+### Common Issues
+
+1. **VM not accessible via SSH**:
+   - Check if the VM is running
+   - Verify the public IP is assigned
    - Ensure the SSH key has correct permissions (600)
+   - Check NSG rules allow SSH traffic
 
-2. **CCF Access Issues**: Check the CCF endpoints in Terraform outputs
+2. **Docker not working**:
+   - Ensure you're in the docker group: `groups`
+   - If not, log out and back in, or run: `newgrp docker`
 
-3. **Resource Creation Failures**: Verify your Azure subscription has sufficient quotas
+3. **Azure CLI authentication**:
+   - The VM has system assigned identity with Owner permissions
+   - You can authenticate using: `az login --identity`
 
-4. **VM Boot Issues**: Check the VM's boot diagnostics in Azure portal
+4. **OpenAI API key not set**:
+   - Check if the variable is set in terraform.tfvars
+   - Verify the environment variable: `echo $OPENAI_API_KEY`
+   - If not set, you can set it manually: `export OPENAI_API_KEY="your-key"`
 
-5. **Certificate Issues**: Verify the generated CCF certificates exist and have correct permissions
+### Getting Help
 
-## Support
+If you encounter issues:
+1. Check the Azure portal for resource status
+2. Review Terraform logs: `terraform logs`
+3. Check VM boot logs: `az vm boot-diagnostics get-boot-log -g <rg> -n <vm-name>`
 
-For issues with:
-- **Terraform**: Check Terraform documentation
-- **Azure Managed CCF**: Refer to Microsoft's CCF documentation
-- **VM Access**: Check Azure VM troubleshooting guides
-- **SSH Keys**: Verify key permissions and connectivity 
+## Variables
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `resource_group_name` | Name of the resource group | `vm-blockchain-rg` | No |
+| `location` | Azure region for resources | `East US` | No |
+| `prefix` | Prefix for resource names | `vm-blockchain` | No |
+| `vm_size` | Size of the virtual machine | `Standard_B2ms` | No |
+| `admin_username` | Admin username for the VM | `azureuser` | No |
+| `openai_api_key` | OpenAI API key for environment | - | Yes | 

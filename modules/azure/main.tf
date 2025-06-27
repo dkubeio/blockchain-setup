@@ -12,14 +12,6 @@ terraform {
       source  = "hashicorp/local"
       version = "~>2.0"
     }
-    null = {
-      source  = "hashicorp/null"
-      version = ">= 3.0.0"
-    }
-    time = {
-      source  = "hashicorp/time"
-      version = ">= 0.13.1"
-    }
   }
 }
 
@@ -43,70 +35,33 @@ resource "local_file" "ssh_public_key" {
   file_permission = "0644"
 }
 
-# Generate CCF member certificates
-resource "tls_private_key" "member0_key" {
-  algorithm = "ECDSA"
-  ecdsa_curve = "P384"
-}
-
-resource "tls_self_signed_cert" "member0_cert" {
-  private_key_pem = tls_private_key.member0_key.private_key_pem
-  
-  subject {
-    common_name = "member0"
-  }
-  
-  validity_period_hours = 8760 # 1 year
-  
-  allowed_uses = [
-    "key_encipherment",
-    "digital_signature",
-    "server_auth",
-    "client_auth",
-  ]
-}
-
-# Save CCF member private key
-resource "local_file" "member0_privk" {
-  content         = tls_private_key.member0_key.private_key_pem
-  filename        = "${path.module}/member0_privk.pem"
-  file_permission = "0600"
-}
-
-# Save CCF member certificate
-resource "local_file" "member0_cert" {
-  content         = tls_self_signed_cert.member0_cert.cert_pem
-  filename        = "${path.module}/member0_cert.pem"
-  file_permission = "0644"
-}
-
 # Resource Group
-resource "azurerm_resource_group" "ccf_rg" {
+resource "azurerm_resource_group" "vm_rg" {
   name     = var.resource_group_name
   location = var.location
 }
 
 # Virtual Network
-resource "azurerm_virtual_network" "ccf_vnet" {
+resource "azurerm_virtual_network" "vm_vnet" {
   name                = "${var.prefix}-vnet"
-  resource_group_name = azurerm_resource_group.ccf_rg.name
-  location            = azurerm_resource_group.ccf_rg.location
+  resource_group_name = azurerm_resource_group.vm_rg.name
+  location            = azurerm_resource_group.vm_rg.location
   address_space       = ["10.0.0.0/16"]
 }
 
 # Subnet for VM
 resource "azurerm_subnet" "vm_subnet" {
   name                 = "${var.prefix}-vm-subnet"
-  resource_group_name  = azurerm_resource_group.ccf_rg.name
-  virtual_network_name = azurerm_virtual_network.ccf_vnet.name
+  resource_group_name  = azurerm_resource_group.vm_rg.name
+  virtual_network_name = azurerm_virtual_network.vm_vnet.name
   address_prefixes     = ["10.0.1.0/24"]
 }
 
 # Network Security Group for VM
 resource "azurerm_network_security_group" "vm_nsg" {
   name                = "${var.prefix}-vm-nsg"
-  location            = azurerm_resource_group.ccf_rg.location
-  resource_group_name = azurerm_resource_group.ccf_rg.name
+  location            = azurerm_resource_group.vm_rg.location
+  resource_group_name = azurerm_resource_group.vm_rg.name
 
   security_rule {
     name                       = "SSH"
@@ -121,8 +76,32 @@ resource "azurerm_network_security_group" "vm_nsg" {
   }
 
   security_rule {
-    name                       = "HTTPS"
+    name                       = "Port-3000"
     priority                   = 1002
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3000"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "Port-8000"
+    priority                   = 1003
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "8000"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "HTTPS"
+    priority                   = 1004
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
@@ -142,16 +121,16 @@ resource "azurerm_subnet_network_security_group_association" "vm_nsg_association
 # Public IP for VM
 resource "azurerm_public_ip" "vm_pip" {
   name                = "${var.prefix}-vm-pip"
-  resource_group_name = azurerm_resource_group.ccf_rg.name
-  location            = azurerm_resource_group.ccf_rg.location
+  resource_group_name = azurerm_resource_group.vm_rg.name
+  location            = azurerm_resource_group.vm_rg.location
   allocation_method   = "Dynamic"
 }
 
 # Network Interface for VM
 resource "azurerm_network_interface" "vm_nic" {
   name                = "${var.prefix}-vm-nic"
-  location            = azurerm_resource_group.ccf_rg.location
-  resource_group_name = azurerm_resource_group.ccf_rg.name
+  location            = azurerm_resource_group.vm_rg.location
+  resource_group_name = azurerm_resource_group.vm_rg.name
 
   ip_configuration {
     name                          = "internal"
@@ -162,10 +141,10 @@ resource "azurerm_network_interface" "vm_nic" {
 }
 
 # Virtual Machine
-resource "azurerm_linux_virtual_machine" "ccf_vm" {
+resource "azurerm_linux_virtual_machine" "vm" {
   name                = "${var.prefix}-vm"
-  resource_group_name = azurerm_resource_group.ccf_rg.name
-  location            = azurerm_resource_group.ccf_rg.location
+  resource_group_name = azurerm_resource_group.vm_rg.name
+  location            = azurerm_resource_group.vm_rg.location
   size                = var.vm_size
   admin_username      = var.admin_username
 
@@ -176,6 +155,10 @@ resource "azurerm_linux_virtual_machine" "ccf_vm" {
   admin_ssh_key {
     username   = var.admin_username
     public_key = tls_private_key.vm_ssh_key.public_key_openssh
+  }
+
+  identity {
+    type = "SystemAssigned"
   }
 
   os_disk {
@@ -192,129 +175,13 @@ resource "azurerm_linux_virtual_machine" "ccf_vm" {
 
   custom_data = base64encode(templatefile("${path.module}/cloud-init.tpl", {
     admin_username = var.admin_username
+    openai_api_key = var.openai_api_key
   }))
 }
 
-# Create Managed CCF using Azure CLI
-resource "null_resource" "create_ccf" {
-  depends_on = [azurerm_resource_group.ccf_rg]
-
-  triggers = {
-    resource_group_name = var.resource_group_name
-    ccf_name           = "${var.prefix}-ccf"
-    location           = var.location
-    member_count       = var.ccf_member_count
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      # Check if CCF already exists
-      EXISTING_CCF=$(az ccf show \
-        --name "${var.prefix}-ccf" \
-        --resource-group "${var.resource_group_name}" \
-        --query "name" \
-        --output tsv 2>/dev/null || echo "")
-      
-      if [ -z "$EXISTING_CCF" ]; then
-        echo "Creating new CCF instance..."
-        az ccf create \
-          --name "${var.prefix}-ccf" \
-          --resource-group "${var.resource_group_name}" \
-          --location "${var.location}" \
-          --member-count ${var.ccf_member_count} \
-          --deployment-type "Dev" \
-          --app-name "${var.prefix}-app" \
-          --app-uri "${var.app_uri}" \
-          --language-runtime "CPP"
-      else
-        echo "CCF instance '${var.prefix}-ccf' already exists"
-      fi
-    EOT
-  }
-}
-
-# Get CCF information using Azure CLI
-data "external" "ccf_info" {
-  depends_on = [null_resource.create_ccf]
-  
-  program = ["bash", "-c", <<-EOT
-    # Get CCF details
-    CCF_ID=$(az ccf show \
-      --name "${var.prefix}-ccf" \
-      --resource-group "${var.resource_group_name}" \
-      --query "id" \
-      --output tsv)
-    
-    IDENTITY_URL=$(az ccf show \
-      --name "${var.prefix}-ccf" \
-      --resource-group "${var.resource_group_name}" \
-      --query "properties.identityUrl" \
-      --output tsv)
-    
-    IDENTITY_SERVICE_URI=$(az ccf show \
-      --name "${var.prefix}-ccf" \
-      --resource-group "${var.resource_group_name}" \
-      --query "properties.identityServiceUri" \
-      --output tsv)
-    
-    APP_URI=$(az ccf show \
-      --name "${var.prefix}-ccf" \
-      --resource-group "${var.resource_group_name}" \
-      --query "properties.appUri" \
-      --output tsv)
-    
-    LEDGER_URI=$(az ccf show \
-      --name "${var.prefix}-ccf" \
-      --resource-group "${var.resource_group_name}" \
-      --query "properties.ledgerUri" \
-      --output tsv)
-    
-    # Output as JSON with proper escaping
-    printf '{"ccf_id":"%s","identity_url":"%s","identity_service_uri":"%s","app_uri":"%s","ledger_uri":"%s"}' \
-      "$CCF_ID" "$IDENTITY_URL" "$IDENTITY_SERVICE_URI" "$APP_URI" "$LEDGER_URI"
-  EOT
-  ]
-}
-
-# Wait for CCF to be ready
-resource "time_sleep" "wait_for_ccf" {
-  depends_on = [null_resource.create_ccf]
-  create_duration = "60s"
-}
-
-# Cleanup CCF resources
-resource "null_resource" "cleanup_ccf" {
-  depends_on = [null_resource.create_ccf]
-
-  triggers = {
-    resource_group_name = var.resource_group_name
-    ccf_name           = "${var.prefix}-ccf"
-  }
-
-  # This will run during terraform destroy
-  provisioner "local-exec" {
-    when = destroy
-
-    command = <<-EOT
-      echo "Deleting CCF instance ${self.triggers.ccf_name}..."
-      az ccf delete \
-        --name "${self.triggers.ccf_name}" \
-        --resource-group "${self.triggers.resource_group_name}" \
-        --yes
-      
-      echo "Waiting for CCF instance to be deleted..."
-      while true; do
-        if ! az ccf show \
-          --name "${self.triggers.ccf_name}" \
-          --resource-group "${self.triggers.resource_group_name}" \
-          --query "name" \
-          --output tsv 2>/dev/null | grep -q "${self.triggers.ccf_name}"; then
-          echo "CCF instance has been deleted"
-          break
-        fi
-        echo "CCF instance still exists, waiting..."
-        sleep 30
-      done
-    EOT
-  }
+# Assign Owner role to the VM's system assigned identity
+resource "azurerm_role_assignment" "vm_owner" {
+  scope                = azurerm_resource_group.vm_rg.id
+  role_definition_name = "Owner"
+  principal_id         = azurerm_linux_virtual_machine.vm.identity[0].principal_id
 } 

@@ -1,10 +1,12 @@
 # Example terraform.tfvars file
 # Copy this file to terraform.tfvars and modify the values as needed
 
-resource_group_name = "ccf-blockchain-rg"
-location            = "East US"
-prefix              = "ccf-blockchain"
-vm_size             = "Standard_D2s_v3"
-admin_username      = "azureuser"
-ccf_member_count    = 3
-app_uri             = "https://github.com/microsoft/CCF/releases/download/ccf-4.0.0/sandbox_js.zip" 
+# Azure Configuration
+resource_group_name = "vm-blockchain-rg"
+location           = "East US"
+prefix             = "vm-blockchain"
+vm_size            = "Standard_B2ms"
+admin_username     = "azureuser"
+
+# OpenAI Configuration
+openai_api_key     = "your-openai-api-key-here" 
