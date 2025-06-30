@@ -1,10 +1,18 @@
-# Azure VM Terraform Configuration
+# Multi-Cloud VM Terraform Configuration
 
-This Terraform configuration deploys a simple Azure virtual machine with Docker, Azure CLI, and OpenAI API key configuration. The configuration automatically generates SSH keys for secure access.
+This Terraform configuration deploys a virtual machine on either AWS or Azure with Docker, Azure CLI, and OpenAI API key configuration. The configuration automatically generates SSH keys for secure access and defaults to AWS.
 
 ## Prerequisites
 
-1. **Azure CLI**: Install and authenticate with Azure
+1. **Cloud Provider CLI**: Install and authenticate with your chosen provider
+   
+   **For AWS**:
+   ```bash
+   aws configure
+   # Set your AWS Access Key ID, Secret Access Key, and default region
+   ```
+   
+   **For Azure**:
    ```bash
    az login
    az account set --subscription <your-subscription-id>
@@ -37,7 +45,7 @@ This Terraform configuration deploys a simple Azure virtual machine with Docker,
    ```bash
    cp terraform.tfvars.example terraform.tfvars
    # Edit terraform.tfvars with your preferred values
-   # Make sure to set your OpenAI API key
+   # Make sure to set your OpenAI API key and choose provider
    ```
 
 4. **Plan the deployment**
@@ -55,15 +63,24 @@ This Terraform configuration deploys a simple Azure virtual machine with Docker,
 
 ## Resources Created
 
+### AWS Resources (Default)
+- **VPC**: Virtual Private Cloud with CIDR 10.0.0.0/16
+- **Subnet**: Public subnet in availability zone
+- **Internet Gateway**: For internet access
+- **Route Table**: Routes traffic to internet gateway
+- **Security Group**: Firewall rules for SSH (22), Port 3000, Port 8000, and HTTPS (443)
+- **Key Pair**: SSH key pair for VM access
+- **EC2 Instance**: Ubuntu 22.04 LTS t3.medium instance
+
+### Azure Resources
 - **Resource Group**: Contains all resources
 - **Virtual Network**: Network infrastructure for the VM
 - **Subnet**: Subnet for the VM
 - **Network Security Group**: Firewall rules for SSH (22), Port 3000, Port 8000, and HTTPS (443)
 - **Public IP**: Public IP address for the VM
 - **Network Interface**: Network interface for the VM
-- **Virtual Machine**: Ubuntu 22.04 LTS Standard B2ms VM with Docker, Azure CLI, and tools installed
+- **Virtual Machine**: Ubuntu 22.04 LTS Standard B2ms VM
 - **System Assigned Identity**: VM identity with Owner permissions on the resource group
-- **SSH Keys**: Automatically generated RSA key pair (4096 bits)
 
 ## Generated Files
 
@@ -78,17 +95,17 @@ After deployment, the following files will be created in the terraform directory
 
 The VM is pre-configured with:
 - Ubuntu 22.04 LTS
-- Standard B2ms VM size (2 vCPUs, 8 GB RAM)
+- **AWS**: t3.medium (2 vCPUs, 4 GB RAM)
+- **Azure**: Standard B2ms (2 vCPUs, 8 GB RAM)
 - Docker and Docker Compose (latest version)
 - Azure CLI
 - Node.js and npm
 - Build tools
-- System assigned identity with Owner permissions
 - OpenAI API key set as environment variable
 
 ## Network Security
 
-The following ports are open in the Network Security Group:
+The following ports are open in the security group/NSG:
 - **Port 22**: SSH access
 - **Port 3000**: Application port
 - **Port 8000**: Application port  
@@ -117,17 +134,18 @@ terraform output ssh_connection_command
 
 2. **SSH into the VM** using the generated private key:
    ```bash
-   ssh -i id_rsa azureuser@<vm-public-ip>
+   ssh -i id_rsa ubuntu@<vm-public-ip>  # For AWS
+   ssh -i id_rsa azureuser@<vm-public-ip>  # For Azure
    ```
 
-   Example:
-   ```bash
-   ssh -i id_rsa azureuser@20.123.45.67
-   ```
+### Method 3: Using Cloud Provider CLI
 
-### Method 3: Using Azure CLI
+**For AWS**:
+```bash
+aws ec2 describe-instances --filters "Name=tag:Name,Values=vm-blockchain-vm" --query 'Reservations[].Instances[].PublicIpAddress' --output text
+```
 
-You can also get the VM's public IP using Azure CLI:
+**For Azure**:
 ```bash
 az vm show -d -g vm-blockchain-rg -n vm-blockchain-vm --query publicIps -o tsv
 ```
@@ -137,14 +155,12 @@ az vm show -d -g vm-blockchain-rg -n vm-blockchain-vm --query publicIps -o tsv
 If you encounter SSH connection issues:
 
 1. **Verify the VM is running**:
-   ```bash
-   az vm show -g vm-blockchain-rg -n vm-blockchain-vm --show-details --query powerState
-   ```
+   **AWS**: Check EC2 console or use `aws ec2 describe-instances`
+   **Azure**: `az vm show -g vm-blockchain-rg -n vm-blockchain-vm --show-details --query powerState`
 
 2. **Check if the VM has a public IP**:
-   ```bash
-   az vm show -d -g vm-blockchain-rg -n vm-blockchain-vm --query publicIps
-   ```
+   **AWS**: `aws ec2 describe-instances --instance-ids <instance-id> --query 'Reservations[].Instances[].PublicIpAddress'`
+   **Azure**: `az vm show -d -g vm-blockchain-rg -n vm-blockchain-vm --query publicIps`
 
 3. **Verify the SSH key exists and has correct permissions**:
    ```bash
@@ -162,11 +178,6 @@ If you encounter SSH connection issues:
    
    # Or use nmap
    nmap -p 22 <vm-public-ip>
-   ```
-
-5. **Check Azure Network Security Group**:
-   ```bash
-   az network nsg rule list -g vm-blockchain-rg --nsg-name vm-blockchain-vm-nsg --query "[?name=='SSH']"
    ```
 
 ### First-time SSH Connection
@@ -194,7 +205,8 @@ echo $OPENAI_API_KEY
 
 1. **SSH into the VM**:
    ```bash
-   ssh -i id_rsa azureuser@<vm-public-ip>
+   ssh -i id_rsa ubuntu@<vm-public-ip>  # For AWS
+   ssh -i id_rsa azureuser@<vm-public-ip>  # For Azure
    ```
 
 2. **Verify the installation**:
@@ -227,9 +239,9 @@ terraform destroy
 ```
 
 This will remove:
-- All Azure resources (VM, network, etc.)
+- All cloud resources (VM, network, etc.)
 - Generated SSH keys
-- Resource group
+- Resource group (Azure) or VPC (AWS)
 
 ## Troubleshooting
 
@@ -239,14 +251,14 @@ This will remove:
    - Check if the VM is running
    - Verify the public IP is assigned
    - Ensure the SSH key has correct permissions (600)
-   - Check NSG rules allow SSH traffic
+   - Check security group/NSG rules allow SSH traffic
 
 2. **Docker not working**:
    - Ensure you're in the docker group: `groups`
    - If not, log out and back in, or run: `newgrp docker`
 
 3. **Azure CLI authentication**:
-   - The VM has system assigned identity with Owner permissions
+   - The VM has system assigned identity with Owner permissions (Azure only)
    - You can authenticate using: `az login --identity`
 
 4. **OpenAI API key not set**:
@@ -257,16 +269,19 @@ This will remove:
 ### Getting Help
 
 If you encounter issues:
-1. Check the Azure portal for resource status
+1. Check the cloud provider console for resource status
 2. Review Terraform logs: `terraform logs`
-3. Check VM boot logs: `az vm boot-diagnostics get-boot-log -g <rg> -n <vm-name>`
+3. Check VM boot logs:
+   **AWS**: Check EC2 console for system logs
+   **Azure**: `az vm boot-diagnostics get-boot-log -g <rg> -n <vm-name>`
 
 ## Variables
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `resource_group_name` | Name of the resource group | `vm-blockchain-rg` | No |
-| `location` | Azure region for resources | `East US` | No |
+| `provider` | Cloud provider to use (aws or azure) | `aws` | No |
+| `resource_group_name` | Name of the resource group (Azure only) | `vm-blockchain-rg` | No |
+| `location` | Cloud region for resources | `East US` | No |
 | `prefix` | Prefix for resource names | `vm-blockchain` | No |
 | `vm_size` | Size of the virtual machine | `Standard_B2ms` | No |
 | `admin_username` | Admin username for the VM | `azureuser` | No |

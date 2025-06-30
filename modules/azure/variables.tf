@@ -28,6 +28,12 @@ variable "admin_username" {
   default     = "azureuser"
 }
 
+variable "ccf_member_count" {
+  description = "Number of CCF members"
+  type        = number
+  default     = 3
+}
+
 variable "openai_api_key" {
   description = "OpenAI API key to set in environment"
   type        = string

@@ -91,6 +91,7 @@ module "azure" {
   vm_size            = var.azure_vm_size
   admin_username     = var.admin_username
   ccf_member_count   = var.azure_ccf_member_count
+  openai_api_key     = var.openai_api_key
 
   providers = {
     azurerm = azurerm.default

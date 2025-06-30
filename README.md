@@ -66,6 +66,9 @@ blockchain-setup/
 
 ## 🛠️ Prerequisites
 
+### ⚠️ Important: Cloud Provider Selection
+**You must explicitly select your cloud provider** in the `terraform.tfvars` file before deployment. There is no default selection to prevent accidental deployments.
+
 ### 🔧 Required Tools
 1. **Terraform Installation**
    ```sh
@@ -119,16 +122,241 @@ cp terraform.tfvars.example terraform.tfvars
 # Initialize Terraform
 terraform init -upgrade
 
-# Plan the deployment
-terraform plan
-
 # Apply the configuration
 terraform apply -auto-approve
 ```
 
+## 🏗️ Terraform Deployment Guide
+
+### Prerequisites Check
+
+Before deploying, ensure you have the required tools and credentials:
+
+```bash
+# Check Terraform version (must be >= 1.0)
+terraform version
+
+# Check AWS CLI (for AWS deployment)
+aws --version
+
+# Check Azure CLI (for Azure deployment)
+az --version
+```
+
+### Step 1: Configuration Setup
+
+1. **Copy the example configuration file:**
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+
+2. **Edit the configuration file:**
+   ```bash
+   # Using your preferred editor
+   nano terraform.tfvars
+   # or
+   vim terraform.tfvars
+   # or
+   code terraform.tfvars
+   ```
+
+3. **Set your cloud provider explicitly:**
+   ```hcl
+   # For AWS deployment
+   cloud_provider = "aws"
+   
+   # For Azure deployment
+   cloud_provider = "azure"
+   ```
+
+### Step 2: Terraform Initialization
+
+```bash
+# Initialize Terraform and download providers
+terraform init -upgrade
+
+# Verify the configuration
+terraform validate
+```
+
+### Step 3: Deployment Commands
+
+#### Option A: Interactive Deployment (Recommended)
+```bash
+# Plan the deployment (shows what will be created)
+terraform plan
+
+# Apply the deployment (interactive confirmation)
+terraform apply
+```
+
+#### Option B: Non-Interactive Deployment
+```bash
+# Plan and apply in one command (auto-approve)
+terraform apply -auto-approve
+```
+
+#### Option C: Plan to File and Apply
+```bash
+# Save the plan to a file
+terraform plan -out=deployment.tfplan
+
+# Apply the saved plan
+terraform apply deployment.tfplan
+```
+
+### Step 4: Verification Commands
+
+```bash
+# Check the status of your deployment
+terraform show
+
+# List all created resources
+terraform state list
+
+# Get specific output values
+terraform output
+
+# Get a specific output
+terraform output client_vm_url  # For AWS
+terraform output azure_vm_public_ip  # For Azure
+```
+
+### Step 5: Monitoring Deployment
+
+#### For AWS Deployment:
+```bash
+# Monitor AWS Managed Blockchain network creation
+aws managedblockchain list-networks --region us-east-1
+
+# Check EC2 instance status
+aws ec2 describe-instances --filters "Name=tag:Name,Values=*blockchain*" --query 'Reservations[*].Instances[*].[InstanceId,State.Name,PublicIpAddress]'
+```
+
+#### For Azure Deployment:
+```bash
+# Monitor VM status
+az vm show -g blockchain-rg -n blockchain-vm --show-details --query powerState
+
+# Check CCF status
+az ccf show --name blockchain-ccf --resource-group blockchain-rg --query "properties.provisioningState"
+```
+
+### Example Deployment Commands
+
+#### AWS Deployment Example:
+```bash
+# 1. Configure AWS credentials
+aws configure
+
+# 2. Set up terraform.tfvars for AWS
+cat > terraform.tfvars << EOF
+cloud_provider = "aws"
+aws_region = "us-east-1"
+vpc_cidr = "10.0.0.0/16"
+ssh_cidr = "0.0.0.0/0"
+resource_prefix = "blockchain"
+network_name = "docvault-network"
+member_name = "docvault-member"
+admin_password = null
+github_token = "your-github-token-here"
+openai_api_key = "your-openai-api-key-here"
+tags = {
+  Environment = "development"
+  Project = "blockchain-setup"
+  Owner = "your-name"
+}
+EOF
+
+# 3. Deploy
+terraform init -upgrade
+terraform plan
+terraform apply -auto-approve
+```
+
+#### Azure Deployment Example:
+```bash
+# 1. Login to Azure
+az login
+az account set --subscription <your-subscription-id>
+
+# 2. Set up terraform.tfvars for Azure
+cat > terraform.tfvars << EOF
+cloud_provider = "azure"
+azure_resource_group_name = "blockchain-rg"
+azure_location = "East US"
+azure_prefix = "blockchain"
+azure_vm_size = "Standard_D2s_v3"
+azure_ccf_member_count = 3
+admin_username = "admin"
+EOF
+
+# 3. Deploy
+terraform init -upgrade
+terraform plan
+terraform apply -auto-approve
+```
+
+### Troubleshooting Deployment
+
+#### Common Issues and Solutions:
+
+1. **Provider Authentication Errors:**
+   ```bash
+   # For AWS
+   aws sts get-caller-identity
+   
+   # For Azure
+   az account show
+   ```
+
+2. **Terraform State Issues:**
+   ```bash
+   # Refresh state
+   terraform refresh
+   
+   # Import existing resources (if needed)
+   terraform import <resource_address> <resource_id>
+   ```
+
+3. **Resource Creation Failures:**
+   ```bash
+   # Check detailed logs
+   TF_LOG=DEBUG terraform apply
+   
+   # Destroy and recreate specific resources
+   terraform destroy -target=module.aws
+   terraform apply
+   ```
+
+4. **Network Timeout Issues:**
+   ```bash
+   # Increase timeout for long-running operations
+   export TF_VAR_aws_region="us-east-1"
+   terraform apply -auto-approve
+   ```
+
+### Cleanup Commands
+
+```bash
+# Destroy all resources
+terraform destroy -auto-approve
+
+# Destroy specific module
+terraform destroy -target=module.aws -auto-approve
+terraform destroy -target=module.azure -auto-approve
+
+# Force destroy (use with caution)
+terraform destroy -auto-approve -refresh=false
+```
+
 ## ☁️ Cloud Provider Selection
 
-This project supports both AWS and Azure cloud providers. Choose your preferred platform by setting the `cloud_provider` variable in `terraform.tfvars`:
+This project supports both AWS and Azure cloud providers. **You must explicitly choose your preferred platform** by setting the `cloud_provider` variable in `terraform.tfvars`. There is no default selection to prevent accidental deployments.
+
+### Required Configuration
+
+**⚠️ IMPORTANT**: You must set the `cloud_provider` variable in your `terraform.tfvars` file before running any Terraform commands.
 
 ```hcl
 # For AWS deployment
@@ -136,6 +364,53 @@ cloud_provider = "aws"
 
 # For Azure deployment  
 cloud_provider = "azure"
+```
+
+### Validation
+
+The configuration validates that only one cloud provider is selected:
+- Valid values: `"aws"` or `"azure"`
+- Invalid values will result in a validation error
+- Only resources for the selected provider will be created
+
+### Example Configuration Files
+
+#### AWS Configuration (`terraform.tfvars`):
+```hcl
+# Required: Explicitly select AWS
+cloud_provider = "aws"
+
+# AWS-specific variables
+aws_region        = "us-east-1"
+vpc_cidr          = "10.0.0.0/16"
+ssh_cidr          = "0.0.0.0/0"
+resource_prefix   = "blockchain"
+network_name      = "docvault-network"
+member_name       = "docvault-member"
+admin_password    = null
+github_token      = "your-github-token-here"
+openai_api_key    = "your-openai-api-key-here"
+
+# AWS tags
+tags = {
+  Environment = "development"
+  Project     = "blockchain-setup"
+  Owner       = "your-name"
+}
+```
+
+#### Azure Configuration (`terraform.tfvars`):
+```hcl
+# Required: Explicitly select Azure
+cloud_provider = "azure"
+
+# Azure-specific variables
+azure_resource_group_name = "blockchain-rg"
+azure_location           = "East US"
+azure_prefix             = "blockchain"
+azure_vm_size            = "Standard_D2s_v3"
+azure_ccf_member_count   = 3
+admin_username           = "admin"
 ```
 
 ## 🏗️ AWS Deployment

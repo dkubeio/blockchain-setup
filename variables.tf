@@ -2,7 +2,6 @@
 variable "cloud_provider" {
   description = "Cloud provider to use (aws or azure)"
   type        = string
-  default     = "aws"
   validation {
     condition     = contains(["aws", "azure"], var.cloud_provider)
     error_message = "Cloud provider must be either 'aws' or 'azure'."

@@ -1,6 +1,7 @@
-# Provider selection (required)
-# Choose either "aws" or "azure"
-cloud_provider = "aws"
+# Provider selection (REQUIRED - no default)
+# You MUST choose either "aws" or "azure" - no default is provided
+# This prevents accidental deployments to the wrong cloud provider
+cloud_provider = "aws"  # Change to "azure" for Azure deployment
 
 # Common variables
 admin_username = "admin"
@@ -8,7 +9,7 @@ admin_username = "admin"
 # AWS-specific variables (only used when cloud_provider = "aws")
 aws_region        = "us-east-1"
 vpc_cidr          = "10.0.0.0/16"
-ssh_cidr          = "0.0.0.0/0"
+ssh_cidr          = "0.0.0.0/0"  # Recommended: "your-ip/32" for security
 resource_prefix   = "blockchain"
 network_name      = "docvault-network"
 member_name       = "docvault-member"

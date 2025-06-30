@@ -19,6 +19,11 @@ output "aws_private_key_path" {
   value       = var.cloud_provider == "aws" ? module.aws[0].private_key_path : null
 }
 
+output "aws_client_vm_url" {
+  description = "URL to access the AWS Blockchain client UI"
+  value       = var.cloud_provider == "aws" ? module.aws[0].client_vm_url : null
+}
+
 # Azure outputs
 output "azure_resource_group_name" {
   description = "Name of the Azure resource group"
@@ -47,12 +52,12 @@ output "azure_private_key_path" {
 
 output "azure_ccf_member0_private_key_path" {
   description = "Path to the CCF member0 private key"
-  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_member0_private_key_path : null
+  value       = var.cloud_provider == "azure" ? module.azure[0].member0_private_key_path : null
 }
 
 output "azure_ccf_member0_certificate_path" {
   description = "Path to the CCF member0 certificate"
-  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_member0_certificate_path : null
+  value       = var.cloud_provider == "azure" ? module.azure[0].member0_certificate_path : null
 }
 
 output "azure_ccf_id" {
@@ -63,11 +68,6 @@ output "azure_ccf_id" {
 output "azure_ccf_identity_url" {
   description = "Azure CCF Identity URL"
   value       = var.cloud_provider == "azure" ? module.azure[0].ccf_identity_url : null
-}
-
-output "azure_ccf_identity_service_uri" {
-  description = "Azure CCF Identity Service URI"
-  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_identity_service_uri : null
 }
 
 output "azure_ccf_app_uri" {

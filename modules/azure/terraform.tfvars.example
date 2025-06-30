@@ -1,6 +1,9 @@
 # Example terraform.tfvars file
 # Copy this file to terraform.tfvars and modify the values as needed
 
+# Provider Configuration
+provider = "aws"  # Options: "aws" or "azure"
+
 # Azure Configuration
 resource_group_name = "vm-blockchain-rg"
 location           = "East US"

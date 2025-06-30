@@ -40,13 +40,6 @@ variable "admin_username" {
   default     = "dkube"
 }
 
-
-variable "peer_node_name" {
-  description = "Name of the peer node"
-  type        = string
-  default     = "peer1"
-}
-
 variable "instance_type" {
   description = "EC2 instance type for the client"
   type        = string
@@ -61,12 +54,6 @@ variable "tags" {
     Project     = "DKube-DocVault"
     ManagedBy   = "terraform"
   }
-}
-
-variable "ssh_key_name" {
-  description = "Name of the SSH key pair to use for the EC2 instance"
-  type        = string
-  default     = "docvault-client"
 }
 
 variable "github_repo" {
