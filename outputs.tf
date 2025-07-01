@@ -50,36 +50,6 @@ output "azure_private_key_path" {
   value       = var.cloud_provider == "azure" ? module.azure[0].private_key_path : null
 }
 
-output "azure_ccf_member0_private_key_path" {
-  description = "Path to the CCF member0 private key"
-  value       = var.cloud_provider == "azure" ? module.azure[0].member0_private_key_path : null
-}
-
-output "azure_ccf_member0_certificate_path" {
-  description = "Path to the CCF member0 certificate"
-  value       = var.cloud_provider == "azure" ? module.azure[0].member0_certificate_path : null
-}
-
-output "azure_ccf_id" {
-  description = "Azure Managed CCF application ID"
-  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_id : null
-}
-
-output "azure_ccf_identity_url" {
-  description = "Azure CCF Identity URL"
-  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_identity_url : null
-}
-
-output "azure_ccf_app_uri" {
-  description = "Azure CCF Application URI"
-  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_app_uri : null
-}
-
-output "azure_ccf_ledger_uri" {
-  description = "Azure CCF Ledger URI"
-  value       = var.cloud_provider == "azure" ? module.azure[0].ccf_ledger_uri : null
-}
-
 # Common outputs
 output "selected_provider" {
   description = "The currently selected provider"

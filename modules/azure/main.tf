@@ -12,6 +12,10 @@ terraform {
       source  = "hashicorp/local"
       version = "~>2.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = ">= 3.0.0"
+    }
   }
 }
 
@@ -40,11 +44,7 @@ resource "azurerm_resource_group" "vm_rg" {
   name     = var.resource_group_name
   location = var.location
 
-  tags = {
-    Name        = var.resource_group_name
-    Environment = "blockchain-setup"
-    ManagedBy   = "terraform"
-  }
+  tags = var.tags
 }
 
 resource "azurerm_virtual_network" "vm_vnet" {
@@ -53,11 +53,7 @@ resource "azurerm_virtual_network" "vm_vnet" {
   location            = azurerm_resource_group.vm_rg.location
   address_space       = ["10.0.0.0/16"]
 
-  tags = {
-    Name        = "${var.prefix}-vnet"
-    Environment = "blockchain-setup"
-    ManagedBy   = "terraform"
-  }
+  tags = var.tags
 }
 
 resource "azurerm_subnet" "vm_subnet" {
@@ -120,11 +116,7 @@ resource "azurerm_network_security_group" "vm_nsg" {
     destination_address_prefix = "*"
   }
 
-  tags = {
-    Name        = "${var.prefix}-nsg"
-    Environment = "blockchain-setup"
-    ManagedBy   = "terraform"
-  }
+  tags = var.tags
 }
 
 resource "azurerm_subnet_network_security_group_association" "vm_nsg_association" {
@@ -138,11 +130,7 @@ resource "azurerm_public_ip" "vm_pip" {
   resource_group_name = azurerm_resource_group.vm_rg.name
   allocation_method   = "Dynamic"
 
-  tags = {
-    Name        = "${var.prefix}-pip"
-    Environment = "blockchain-setup"
-    ManagedBy   = "terraform"
-  }
+  tags = var.tags
 }
 
 resource "azurerm_network_interface" "vm_nic" {
@@ -157,11 +145,7 @@ resource "azurerm_network_interface" "vm_nic" {
     public_ip_address_id          = azurerm_public_ip.vm_pip.id
   }
 
-  tags = {
-    Name        = "${var.prefix}-nic"
-    Environment = "blockchain-setup"
-    ManagedBy   = "terraform"
-  }
+  tags = var.tags
 }
 
 resource "azurerm_linux_virtual_machine" "vm" {
@@ -197,70 +181,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
     openai_api_key = var.openai_api_key
   }))
 
-  tags = {
-    Name        = "${var.prefix}-vm"
-    Environment = "blockchain-setup"
-    ManagedBy   = "terraform"
-  }
-}
-
-# Create Managed CCF instance using Azure CLI
-resource "null_resource" "create_ccf" {
-  depends_on = [azurerm_linux_virtual_machine.vm]
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      # Check if CCF instance already exists
-      EXISTING_CCF=$(az ccf list --resource-group ${var.resource_group_name} --query "[?name=='${var.prefix}-ccf'].name" --output tsv)
-      
-      if [ -z "$EXISTING_CCF" ]; then
-        echo "Creating new CCF instance..."
-        az ccf create \
-          --name "${var.prefix}-ccf" \
-          --resource-group "${var.resource_group_name}" \
-          --location "${var.location}" \
-          --member-count ${var.ccf_member_count} \
-          --member-certificate-subject-name "CN=CCF Member" \
-          --member-certificate-validity-in-years 1
-      else
-        echo "CCF instance '${var.prefix}-ccf' already exists"
-      fi
-    EOT
-  }
-}
-
-# Get CCF information
-data "external" "ccf_info" {
-  depends_on = [null_resource.create_ccf]
-  
-  program = ["bash", "-c", <<-EOT
-    # Get CCF details
-    CCF_ID=$(az ccf show --name "${var.prefix}-ccf" --resource-group "${var.resource_group_name}" --query "id" --output tsv)
-    IDENTITY_URL=$(az ccf show --name "${var.prefix}-ccf" --resource-group "${var.resource_group_name}" --query "properties.identityServiceUri" --output tsv)
-    APP_URI=$(az ccf show --name "${var.prefix}-ccf" --resource-group "${var.resource_group_name}" --query "properties.appUri" --output tsv)
-    LEDGER_URI=$(az ccf show --name "${var.prefix}-ccf" --resource-group "${var.resource_group_name}" --query "properties.ledgerUri" --output tsv)
-    
-    # Output as JSON
-    printf '{"ccf_id":"%s","identity_url":"%s","app_uri":"%s","ledger_uri":"%s"}' "$CCF_ID" "$IDENTITY_URL" "$APP_URI" "$LEDGER_URI"
-  EOT
-  ]
-}
-
-# Generate member certificates
-resource "null_resource" "generate_member_certs" {
-  depends_on = [data.external.ccf_info]
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      # Generate member0 private key and certificate
-      openssl genrsa -out ${path.module}/member0_privk.pem 2048
-      openssl req -new -key ${path.module}/member0_privk.pem -out ${path.module}/member0_cert.csr -subj "/CN=CCF Member 0"
-      openssl x509 -req -in ${path.module}/member0_cert.csr -signkey ${path.module}/member0_privk.pem -out ${path.module}/member0_cert.pem -days 365
-      
-      # Clean up CSR file
-      rm ${path.module}/member0_cert.csr
-    EOT
-  }
+  tags = var.tags
 }
 
 # Cleanup generated files on destroy
@@ -270,8 +191,6 @@ resource "null_resource" "cleanup_files" {
     command = <<-EOT
       rm -f ${path.module}/id_rsa
       rm -f ${path.module}/id_rsa.pub
-      rm -f ${path.module}/member0_privk.pem
-      rm -f ${path.module}/member0_cert.pem
     EOT
   }
 } 

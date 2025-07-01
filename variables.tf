@@ -12,7 +12,7 @@ variable "cloud_provider" {
 variable "admin_username" {
   description = "Admin username for the blockchain nodes"
   type        = string
-  default     = "admin"
+  default     = "docvault"
 }
 
 # AWS-specific variables
@@ -105,10 +105,4 @@ variable "azure_vm_size" {
   description = "Size of the Azure VM"
   type        = string
   default     = "Standard_D2s_v3"
-}
-
-variable "azure_ccf_member_count" {
-  description = "Number of CCF members"
-  type        = number
-  default     = 3
 } 

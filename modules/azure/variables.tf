@@ -25,17 +25,21 @@ variable "vm_size" {
 variable "admin_username" {
   description = "Admin username for the virtual machine"
   type        = string
-  default     = "azureuser"
-}
-
-variable "ccf_member_count" {
-  description = "Number of CCF members"
-  type        = number
-  default     = 3
+  default     = "docvault"
 }
 
 variable "openai_api_key" {
   description = "OpenAI API key to set in environment"
   type        = string
   sensitive   = true
+}
+
+variable "tags" {
+  description = "Tags to apply to Azure resources"
+  type        = map(string)
+  default = {
+    Environment = "development"
+    Project     = "blockchain-setup"
+    ManagedBy   = "terraform"
+  }
 } 

@@ -42,7 +42,6 @@ kubeconfig
 *.tfstate.*
 .terraform/
 .terraform.lock.hcl
-terraform.tfvars
 
 # SSH keys and certificates
 *.pem

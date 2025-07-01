@@ -24,7 +24,7 @@
 - [Cleanup](#-cleanup)
 
 ## 🎯 Overview
-This project provisions secure, multi-tier blockchain infrastructure using Terraform for document ledgering and securing AI interactions. The infrastructure supports both AWS Managed Blockchain (Hyperledger Fabric) and Azure Managed CCF (Confidential Consortium Framework) deployments.
+This project provisions secure, multi-tier blockchain infrastructure using Terraform for document ledgering and securing AI interactions. The infrastructure supports both AWS Managed Blockchain (Hyperledger Fabric) and Azure VM deployments.
 
 ## 📁 Project Structure
 
@@ -34,7 +34,7 @@ blockchain-setup/
 ├── main.tf                      # Main Terraform configuration
 ├── variables.tf                 # Variable definitions
 ├── outputs.tf                   # Output definitions
-├── terraform.tfvars.example     # Example configuration
+├── terraform.tfvars             # Configuration (no secrets)
 ├── .gitignore                   # Git ignore rules
 ├── images/                      # Documentation images
 └── modules/
@@ -53,21 +53,27 @@ blockchain-setup/
         ├── outputs.tf
         ├── cloud-init.tpl
         ├── README.md
-        └── terraform.tfvars.example
+        └── terraform.tfvars     # Azure configuration (no secrets)
 ```
 
 ### Key Components:
 
 - **Root Configuration**: Main Terraform files that orchestrate the deployment
 - **AWS Module**: Complete AWS Managed Blockchain setup with networking
-- **Azure Module**: Complete Azure Managed CCF setup with VM provisioning
+- **Azure Module**: Complete Azure VM setup with networking
 - **Network Submodule**: Reusable networking components for AWS
+- **Configuration Files**: Secure terraform.tfvars files (no secrets stored)
 - **Documentation**: Comprehensive guides and examples for both cloud providers
 
 ## 🛠️ Prerequisites
 
-### ⚠️ Important: Cloud Provider Selection
-**You must explicitly select your cloud provider** in the `terraform.tfvars` file before deployment. There is no default selection to prevent accidental deployments.
+### ⚠️ Important: Cloud Provider and Secrets Management
+**You must explicitly select your cloud provider and provide secrets** during terraform apply. There is no default selection to prevent accidental deployments.
+
+### 🔐 Security Best Practices
+- **Secrets are NOT stored in terraform.tfvars files** to prevent accidental commits
+- **Provider selection is passed via command line** to ensure explicit choice
+- **Environment variables** are used for sensitive data (GitHub token, OpenAI API key)
 
 ### 🔧 Required Tools
 1. **Terraform Installation**
@@ -108,6 +114,28 @@ blockchain-setup/
 1. 🔐 Azure Account with appropriate permissions
 2. Azure CLI configured and authenticated
 
+### 🔒 Command-Line Variable Approach
+
+This project uses a secure approach where sensitive data and provider selection are passed via command-line variables:
+
+```bash
+# Set environment variables for secrets
+export DKUBE_GIT_TOKEN="your-dkube-git-token"
+export OPENAI_API_KEY="your-openai-api-key"
+
+# Apply with all required variables
+terraform apply -auto-approve \
+  -var="github_token=$DKUBE_GIT_TOKEN" \
+  -var="openai_api_key=$OPENAI_API_KEY" \
+  -var="cloud_provider=aws"
+```
+
+**Benefits:**
+- ✅ No secrets in version control
+- ✅ Explicit provider selection prevents accidents
+- ✅ Environment variables for sensitive data
+- ✅ Clear audit trail of what was deployed
+
 ## 🚀 Quick Start
 
 ```sh
@@ -116,14 +144,18 @@ git clone https://github.com/dkubeio/blockchain-setup.git
 cd blockchain-setup/
 
 # Copy and configure variables
-cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your preferred cloud provider and credentials
+cp terraform.tfvars terraform.tfvars
+# Edit terraform.tfvars with your preferred configuration (no secrets needed)
+
+# Set environment variables for secrets
+export DKUBE_GIT_TOKEN="your-dkube-git-token"
+export OPENAI_API_KEY="your-openai-api-key"
 
 # Initialize Terraform
 terraform init -upgrade
 
-# Apply the configuration
-terraform apply -auto-approve
+# Apply the configuration with secrets passed via command line
+terraform apply -auto-approve -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=aws"
 ```
 
 ## 🏗️ Terraform Deployment Guide
@@ -145,9 +177,9 @@ az --version
 
 ### Step 1: Configuration Setup
 
-1. **Copy the example configuration file:**
+1. **Copy the configuration file:**
    ```bash
-   cp terraform.tfvars.example terraform.tfvars
+   cp terraform.tfvars terraform.tfvars
    ```
 
 2. **Edit the configuration file:**
@@ -160,13 +192,10 @@ az --version
    code terraform.tfvars
    ```
 
-3. **Set your cloud provider explicitly:**
-   ```hcl
-   # For AWS deployment
-   cloud_provider = "aws"
-   
-   # For Azure deployment
-   cloud_provider = "azure"
+3. **Set environment variables for secrets:**
+   ```bash
+   export DKUBE_GIT_TOKEN="your-dkube-git-token"
+   export OPENAI_API_KEY="your-openai-api-key"
    ```
 
 ### Step 2: Terraform Initialization
@@ -184,22 +213,22 @@ terraform validate
 #### Option A: Interactive Deployment (Recommended)
 ```bash
 # Plan the deployment (shows what will be created)
-terraform plan
+terraform plan -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=aws"
 
 # Apply the deployment (interactive confirmation)
-terraform apply
+terraform apply -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=aws"
 ```
 
 #### Option B: Non-Interactive Deployment
 ```bash
 # Plan and apply in one command (auto-approve)
-terraform apply -auto-approve
+terraform apply -auto-approve -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=aws"
 ```
 
 #### Option C: Plan to File and Apply
 ```bash
 # Save the plan to a file
-terraform plan -out=deployment.tfplan
+terraform plan -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=aws" -out=deployment.tfplan
 
 # Apply the saved plan
 terraform apply deployment.tfplan
@@ -251,7 +280,6 @@ aws configure
 
 # 2. Set up terraform.tfvars for AWS
 cat > terraform.tfvars << EOF
-cloud_provider = "aws"
 aws_region = "us-east-1"
 vpc_cidr = "10.0.0.0/16"
 ssh_cidr = "0.0.0.0/0"
@@ -259,8 +287,6 @@ resource_prefix = "blockchain"
 network_name = "docvault-network"
 member_name = "docvault-member"
 admin_password = null
-github_token = "your-github-token-here"
-openai_api_key = "your-openai-api-key-here"
 tags = {
   Environment = "development"
   Project = "blockchain-setup"
@@ -268,10 +294,14 @@ tags = {
 }
 EOF
 
-# 3. Deploy
+# 3. Set environment variables for secrets
+export DKUBE_GIT_TOKEN="your-dkube-git-token"
+export OPENAI_API_KEY="your-openai-api-key"
+
+# 4. Deploy
 terraform init -upgrade
-terraform plan
-terraform apply -auto-approve
+terraform plan -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=aws"
+terraform apply -auto-approve -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=aws"
 ```
 
 #### Azure Deployment Example:
@@ -282,19 +312,21 @@ az account set --subscription <your-subscription-id>
 
 # 2. Set up terraform.tfvars for Azure
 cat > terraform.tfvars << EOF
-cloud_provider = "azure"
 azure_resource_group_name = "blockchain-rg"
 azure_location = "East US"
 azure_prefix = "blockchain"
 azure_vm_size = "Standard_D2s_v3"
-azure_ccf_member_count = 3
 admin_username = "admin"
 EOF
 
-# 3. Deploy
+# 3. Set environment variables for secrets
+export DKUBE_GIT_TOKEN="your-dkube-git-token"
+export OPENAI_API_KEY="your-openai-api-key"
+
+# 4. Deploy
 terraform init -upgrade
-terraform plan
-terraform apply -auto-approve
+terraform plan -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=azure"
+terraform apply -auto-approve -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=azure"
 ```
 
 ### Troubleshooting Deployment
@@ -352,18 +384,18 @@ terraform destroy -auto-approve -refresh=false
 
 ## ☁️ Cloud Provider Selection
 
-This project supports both AWS and Azure cloud providers. **You must explicitly choose your preferred platform** by setting the `cloud_provider` variable in `terraform.tfvars`. There is no default selection to prevent accidental deployments.
+This project supports both AWS and Azure cloud providers. **You must explicitly choose your preferred platform** by passing the `cloud_provider` variable during terraform apply. There is no default selection to prevent accidental deployments.
 
 ### Required Configuration
 
-**⚠️ IMPORTANT**: You must set the `cloud_provider` variable in your `terraform.tfvars` file before running any Terraform commands.
+**⚠️ IMPORTANT**: You must pass the `cloud_provider` variable during terraform apply commands.
 
-```hcl
+```bash
 # For AWS deployment
-cloud_provider = "aws"
+terraform apply -var="cloud_provider=aws" -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY"
 
 # For Azure deployment  
-cloud_provider = "azure"
+terraform apply -var="cloud_provider=azure" -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY"
 ```
 
 ### Validation
@@ -377,9 +409,6 @@ The configuration validates that only one cloud provider is selected:
 
 #### AWS Configuration (`terraform.tfvars`):
 ```hcl
-# Required: Explicitly select AWS
-cloud_provider = "aws"
-
 # AWS-specific variables
 aws_region        = "us-east-1"
 vpc_cidr          = "10.0.0.0/16"
@@ -388,8 +417,6 @@ resource_prefix   = "blockchain"
 network_name      = "docvault-network"
 member_name       = "docvault-member"
 admin_password    = null
-github_token      = "your-github-token-here"
-openai_api_key    = "your-openai-api-key-here"
 
 # AWS tags
 tags = {
@@ -401,9 +428,6 @@ tags = {
 
 #### Azure Configuration (`terraform.tfvars`):
 ```hcl
-# Required: Explicitly select Azure
-cloud_provider = "azure"
-
 # Azure-specific variables
 azure_resource_group_name = "blockchain-rg"
 azure_location           = "East US"
@@ -442,9 +466,6 @@ admin_username           = "admin"
 Edit `terraform.tfvars` with your AWS-specific values:
 
 ```hcl
-# Provider selection
-cloud_provider = "aws"
-
 # AWS-specific variables
 aws_region        = "us-east-1"
 vpc_cidr          = "10.0.0.0/16"
@@ -453,8 +474,6 @@ resource_prefix   = "blockchain"
 network_name      = "docvault-network"
 member_name       = "docvault-member"
 admin_password    = null  # Will be auto-generated if not provided
-github_token      = "your-dkube-git-token"
-openai_api_key    = "your-openai-api-key"
 
 # AWS tags
 tags = {
@@ -466,14 +485,18 @@ tags = {
 
 ### AWS Deployment Commands
 ```sh
+# Set environment variables for secrets
+export DKUBE_GIT_TOKEN="your-dkube-git-token"
+export OPENAI_API_KEY="your-openai-api-key"
+
 # Initialize (if not already done)
 terraform init -upgrade
 
 # Plan AWS deployment
-terraform plan
+terraform plan -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=aws"
 
 # Apply AWS deployment
-terraform apply -auto-approve
+terraform apply -auto-approve -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=aws"
 ```
 
 ## 🔷 Azure Deployment
@@ -501,9 +524,6 @@ terraform apply -auto-approve
 Edit `terraform.tfvars` with your Azure-specific values:
 
 ```hcl
-# Provider selection
-cloud_provider = "azure"
-
 # Azure-specific variables
 azure_resource_group_name = "blockchain-rg"
 azure_location           = "East US"
@@ -514,14 +534,18 @@ azure_ccf_member_count   = 3
 
 ### Azure Deployment Commands
 ```sh
+# Set environment variables for secrets
+export DKUBE_GIT_TOKEN="your-dkube-git-token"
+export OPENAI_API_KEY="your-openai-api-key"
+
 # Initialize (if not already done)
 terraform init -upgrade
 
 # Plan Azure deployment
-terraform plan
+terraform plan -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=azure"
 
 # Apply Azure deployment
-terraform apply -auto-approve
+terraform apply -auto-approve -var="github_token=$DKUBE_GIT_TOKEN" -var="openai_api_key=$OPENAI_API_KEY" -var="cloud_provider=azure"
 ```
 
 ## 🌐 Accessing the Application
@@ -559,17 +583,10 @@ After successful Azure deployment:
    ssh -i modules/azure/id_rsa azureuser@<vm-public-ip>
    ```
 
-3. **Access CCF Endpoints**
-   - CCF ID: `terraform output azure_ccf_id`
-   - Identity URL: `terraform output azure_ccf_identity_url`
-   - Identity Service URI: `terraform output azure_ccf_identity_service_uri`
-   - Application URI: `terraform output azure_ccf_app_uri`
-   - Ledger URI: `terraform output azure_ccf_ledger_uri`
-
-4. **Access CCF Tools and Certificates**
+3. **Access VM Resources**
    - SSH private key: `terraform output azure_private_key_path`
-   - CCF member0 private key: `terraform output azure_ccf_member0_private_key_path`
-   - CCF member0 certificate: `terraform output azure_ccf_member0_certificate_path`
+   - Resource group: `terraform output azure_resource_group_name`
+   - VM name: `terraform output azure_vm_name`
 
 ⚠️ **Important**: Make sure to save your login credentials securely as they will be needed for future access.
 
@@ -605,7 +622,7 @@ After successful Azure deployment:
    - Configure environment
    - Start application server
 
-### Azure Resource Creation Sequence (15-20 minutes total):
+### Azure Resource Creation Sequence (10-15 minutes total):
 
 1. **🔷 Azure Infrastructure** (5-10 minutes):
    - Resource Group
@@ -615,13 +632,8 @@ After successful Azure deployment:
 
 2. **💻 Virtual Machine** (5-10 minutes):
    - Ubuntu 22.04 LTS VM
-   - Pre-installed tools (Docker, Azure CLI, CCF, Node.js)
+   - Pre-installed tools (Docker, Azure CLI, Node.js)
    - SSH key generation
-
-3. **⛓️ Managed CCF** (5-10 minutes):
-   - CCF instance creation via Azure CLI
-   - Member certificate generation
-   - Endpoint configuration and retrieval
 
 ## 🛡️ Security
 
@@ -682,9 +694,6 @@ az vm show -g <resource-group> -n <vm-name> --show-details --query powerState
 
 # Verify VM connectivity
 az vm show -d -g <resource-group> -n <vm-name> --query publicIps
-
-# Check CCF status
-az ccf show --name <ccf-name> --resource-group <resource-group> --query "properties.provisioningState"
 ```
 
 ### Debugging Tips
@@ -700,21 +709,21 @@ To destroy all created resources:
 ### AWS Cleanup
 ```bash
 # Destroy AWS resources
-terraform destroy -auto-approve -var="github_token=dummy_token" -var="openai_api_key=dummy_key"
+terraform destroy -auto-approve -var="github_token=dummy_token" -var="openai_api_key=dummy_key" -var="cloud_provider=aws"
 ```
 
 ### Azure Cleanup
 ```bash
 # Destroy Azure resources (automatically deletes generated files)
-terraform destroy -auto-approve
+terraform destroy -auto-approve -var="github_token=dummy_token" -var="openai_api_key=dummy_key" -var="cloud_provider=azure"
 ```
 
 ⚠️ **Warning**: This will permanently delete all resources. Ensure you have backups if needed.
 
 ### Generated Files Cleanup
 - **AWS**: No local files generated
-- **Azure**: SSH keys (`id_rsa`, `id_rsa.pub`) and CCF certificates (`member0_privk.pem`, `member0_cert.pem`) are automatically deleted during `terraform destroy`
+- **Azure**: SSH keys (`id_rsa`, `id_rsa.pub`) are automatically deleted during `terraform destroy`
 
 ---
 
-Built for enterprise Document Security solutions | Powered by AWS Managed Private Blockchain & Azure Managed CCF
+Built for enterprise Document Security solutions | Powered by AWS Managed Private Blockchain & Azure VM Infrastructure

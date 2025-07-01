@@ -1,10 +1,9 @@
-# Provider selection (REQUIRED - no default)
-# You MUST choose either "aws" or "azure" - no default is provided
-# This prevents accidental deployments to the wrong cloud provider
-cloud_provider = "aws"  # Change to "azure" for Azure deployment
+# Terraform configuration file
+# Copy this file and modify the values as needed
+# Note: Secrets (github_token, openai_api_key) and provider are passed via command line
 
 # Common variables
-admin_username = "admin"
+admin_username = "docvault"
 
 # AWS-specific variables (only used when cloud_provider = "aws")
 aws_region        = "us-east-1"
@@ -14,8 +13,6 @@ resource_prefix   = "blockchain"
 network_name      = "docvault-network"
 member_name       = "docvault-member"
 admin_password    = null  # Will be auto-generated if not provided
-github_token      = "your-github-token-here"
-openai_api_key    = "your-openai-api-key-here"
 
 # AWS tags
 tags = {
@@ -28,5 +25,4 @@ tags = {
 azure_resource_group_name = "blockchain-rg"
 azure_location           = "East US"
 azure_prefix             = "blockchain"
-azure_vm_size            = "Standard_D2s_v3"
-azure_ccf_member_count   = 3 
+azure_vm_size            = "Standard_D2s_v3" 

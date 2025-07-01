@@ -40,8 +40,15 @@ provider "aws" {
 
 # Azure Provider
 provider "azurerm" {
-  features {}
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
   alias = "default"
+  
+  # Performance optimizations
+  skip_provider_registration = true
 }
 
 # Common providers
@@ -90,12 +97,13 @@ module "azure" {
   prefix             = var.azure_prefix
   vm_size            = var.azure_vm_size
   admin_username     = var.admin_username
-  ccf_member_count   = var.azure_ccf_member_count
   openai_api_key     = var.openai_api_key
+  tags               = var.tags
 
   providers = {
     azurerm = azurerm.default
     tls     = tls
     local   = local
+    null    = null
   }
 } 
