@@ -13,7 +13,7 @@ variable "ssh_cidr" {
 variable "resource_prefix" {
   description = "Prefix to be used for all resources"
   type        = string
-  default     = "docvault"
+  default     = "securelink"
 }
 
 variable "tags" {
@@ -21,7 +21,7 @@ variable "tags" {
   type        = map(string)
   default     = {
     Environment = "development"
-    Project     = "DKube-DocVault"
+    Project     = "DKube-SecureLink"
     ManagedBy   = "terraform"
   }
 } 
