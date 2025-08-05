@@ -1,11 +1,11 @@
-# 🏗️ DKube DocVault Terraform Setup
+# 🏗️ DKube SecureLink Terraform Setup
 
 [![Terraform Version](https://img.shields.io/badge/terraform-1.6+-blue.svg)](https://www.terraform.io/downloads.html)
 [![AWS](https://img.shields.io/badge/AWS-Cloud-orange.svg)](https://aws.amazon.com)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/dkubeio/blockchain-setup/graphs/commit-activity)
 
 <div align="center">
-<img src="images/dkube-docvault.svg" alt="Dkube DocVault Banner" width="600"/>
+<img src="images/dkube-securelink.svg" alt="DKube SecureLink Banner" width="600"/>
 </div>
 
 ## 📋 Table of Contents
@@ -19,7 +19,7 @@
 - [Cleanup](#-cleanup)
 
 ## 🎯 Overview
-This project provisions a secure, multi-tier AWS network and Managed Blockchain resources using Terraform for document ledgering and securing AI interactions. The infrastructure includes a Hyperledger Fabric network, client application, and all necessary networking components.
+This project provisions a secure, multi-tier AWS network and Managed Blockchain resources using Terraform for supply chain monitoring. The infrastructure includes a Hyperledger Fabric network, client application, and all necessary networking components.
 
 ## 🛠️ Prerequisites
 

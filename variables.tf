@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "resource_prefix" {
   description = "Prefix to be used for all resources"
   type        = string
-  default     = "docvault"
+  default     = "securelink"
 }
 
 variable "vpc_cidr" {
@@ -25,7 +25,7 @@ variable "ssh_cidr" {
 variable "network_name" {
   description = "Name of the Hyperledger Fabric network"
   type        = string
-  default     = "docvault-network"
+  default     = "securelink-network"
 }
 
 variable "member_name" {
@@ -58,7 +58,7 @@ variable "tags" {
   type        = map(string)
   default     = {
     Environment = "development"
-    Project     = "DKube-DocVault"
+    Project     = "DKube-SecureLink"
     ManagedBy   = "terraform"
   }
 }
@@ -66,25 +66,25 @@ variable "tags" {
 variable "ssh_key_name" {
   description = "Name of the SSH key pair to use for the EC2 instance"
   type        = string
-  default     = "docvault-client"
+  default     = "securelink-client"
 }
 
 variable "github_repo" {
   description = "GitHub repository in format owner/repo"
   type        = string
-  default     = "dkubeio/Blockchain"
+  default     = "raidders/secure-link"
 }
 
 variable "github_ref" {
   description = "GitHub reference to clone (can be branch name or tag name)"
   type        = string
-  default     = "v1.5.0"
+  default     = "v0.5.0-rc1"
 }
 
 variable "chaincode_name" {
   description = "Name of the chaincode to be deployed"
   type        = string
-  default     = "mydl5"
+  default     = "mychain"
 }
 
 variable "admin_password" {

@@ -70,7 +70,7 @@ module "network" {
 }
 
 # Create Managed Blockchain network using AWS CLI
-resource "null_resource" "docvault_network" {
+resource "null_resource" "securelink_network" {
   triggers = {
     network_name = var.network_name
     member_name  = var.member_name
@@ -124,7 +124,7 @@ resource "null_resource" "docvault_network" {
 
 # Get network ID using AWS CLI
 data "external" "network_info" {
-  depends_on = [null_resource.docvault_network]
+  depends_on = [null_resource.securelink_network]
   
   program = ["bash", "-c", <<-EOT
     # Get the network ID
@@ -148,7 +148,7 @@ data "external" "network_info" {
 
 # Create peer node using AWS CLI
 resource "null_resource" "create_peer" {
-  depends_on = [null_resource.docvault_network, data.external.network_info]
+  depends_on = [null_resource.securelink_network, data.external.network_info]
 
   triggers = {
     network_id = data.external.network_info.result.network_id
@@ -248,7 +248,7 @@ resource "time_sleep" "wait_for_peer" {
 resource "aws_vpc_endpoint" "managedblockchain" {
   depends_on = [
     module.network,
-    null_resource.docvault_network,
+    null_resource.securelink_network,
     time_sleep.wait_for_peer,
     data.external.network_info
   ]
@@ -385,7 +385,7 @@ resource "aws_instance" "client" {
   depends_on = [
     aws_vpc_endpoint.managedblockchain,
     module.network,
-    null_resource.docvault_network,
+    null_resource.securelink_network,
     aws_eip.client_eip,
     aws_key_pair.blockchain_key
   ]
@@ -453,7 +453,8 @@ REPO_DIR=$(echo ${var.github_repo} | cut -d'/' -f2)
 
 # Execute the user data script
 echo "Starting blockchain setup script..."
-cp $REPO_DIR/scripts/ec2-client/* .
+cp $REPO_DIR/backend/setup-files/* .
+cp $REPO_DIR/backend/chaincode_client/templates/* .
 chmod +x blockchain_client_setup.sh
 ./blockchain_client_setup.sh
 EOT
